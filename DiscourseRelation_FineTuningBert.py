@@ -405,7 +405,7 @@ torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 # In[42]:
 
 
-predict_NLI = discourse_relation_mlp.predict(tokens['snli test'])
+predict_NLI = discourse_relation_mlp.predict(tokenized['snli test'])
 print(predict_NLI)
 
 
