@@ -179,11 +179,11 @@ class BertMLP(nn.Module):
 
         return log_prob
 
-      # l'entrainement du MLP
+    # l'entrainement du MLP
 
-      # reg : regularite du calcul de la loss (on calcule la loss toutes les reg epoques)
-      # down_sampling : booleen pour savoir si on fait du down sampling
-      # size_of_samples : taille des samples lorsqu'on fait du down sampling
+    # reg : regularite du calcul de la loss (on calcule la loss toutes les reg epoques)
+    # down_sampling : booleen pour savoir si on fait du down sampling
+    # size_of_samples : taille des samples lorsqu'on fait du down sampling
 
     def training_step(self, optimizer, nb_epoch = 50000, patience = 3, reg = 20, down_sampling = True, size_of_samples = 800):
         # les listes qui contiendront les valeurs de la loss sur le dev et le train pour chaque époque
@@ -277,7 +277,7 @@ class BertMLP(nn.Module):
         return dev_losses, train_losses
       
     def predict(self, arg1, arg2):
-        i=0
+        i = 0
         predictions = torch.tensor([])
 
         while i < len(arg1):
@@ -288,16 +288,20 @@ class BertMLP(nn.Module):
         return predictions
 
     def evaluation(self, data_set):
+        y_true = torch.tensor(y[data_set])
+        y_pred = self.predict(Arg1[data_set], Arg2[data_set])
 
-          y_true = torch.tensor(y[data_set])
-          y_pred = self.predict(Arg1[data_set], Arg2[data_set])
+        torch.save(torch.tensor(confusion_matrix(y_true, y_pred)), data_set+'_confmat.pt')
+        print(confusion_matrix(y_true, y_pred))
 
-          torch.save(confusion_matrix(y_true, y_pred), data_set+'_confmat.pt')
+        torch.save(torch.tensor(f1_score(y_true, y_pred, average='macro')), data_set+'_f1macro.pt')
+        print("f1 macro : ", f1_score(y_true, y_pred, average='macro'))
 
-          print(confusion_matrix(y_true, y_pred))
-          print("f1 macro : ", f1_score(y_true, y_pred, average='macro'))
-          print("precision macro : ", precision_score(y_true, y_pred, average='macro'))
-          print("exactitude : ", accuracy_score(y_true, y_pred))
+        torch.save(torch.tensor(precision_score(y_true, y_pred, average='macro')), data_set+'_precisionmacro.pt')
+        print("precision macro : ", precision_score(y_true, y_pred, average='macro'))
+
+        torch.save(torch.tensor(accuracy_score(y_true, y_pred)), data_set+'_accuracy.pt')
+        print("exactitude : ", accuracy_score(y_true, y_pred))
 
 
 # In[21]:
@@ -372,7 +376,7 @@ plt.savefig('BertFineTunedModel.png')
 torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 
 # chargement d'un modele
-#discourse_relation_mlp = torch.load('fourth_model.pth')
+# discourse_relation_mlp = torch.load('fourth_model.pth')
 
 
 # In[32]:
