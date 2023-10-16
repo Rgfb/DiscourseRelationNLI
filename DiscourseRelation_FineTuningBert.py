@@ -135,7 +135,7 @@ print("test :", Counter(y['test']))
 # In[10]:
 # tokenisation des 3 sets
 
-tokens = {'dev': tokenizer(Arg1['dev'], Arg2['dev'], truncation=True, max_length=128,
+tokenized = {'dev': tokenizer(Arg1['dev'], Arg2['dev'], truncation=True, max_length=128,
                            return_tensors="pt", padding='max_length'),
           'test': tokenizer(Arg1['test'], Arg2['test'], truncation=True, max_length=128,
                             return_tensors="pt", padding='max_length'),
@@ -258,10 +258,8 @@ class BertMLP(nn.Module):
             while i < len(y_sample):
                 # input_vectors : les vecteurs contenant les ids et les masks pour chaque exemple
                 # gold_classes : les goldclass associées
-                arg1, arg2, gold_classes = arg1_sample[i: i+self.size_of_batch], arg2_sample[i: i+self.size_of_batch], torch.LongTensor(y_sample[i: i+self.size_of_batch])
-
-                tokens = tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
-                                   return_tensors="pt", padding='max_length')
+                tokens, gold_classes = (tokenized['train'][i: i+self.size_of_batch],
+                                        torch.LongTensor(y_sample[i: i+self.size_of_batch]))
 
                 i += self.size_of_batch
 
@@ -287,12 +285,12 @@ class BertMLP(nn.Module):
                 # pour pouvoir comparer l'évolution des 2
 
                 # evaluation sur le dev
-                log_probs_dev = self.forward(tokens['dev'])
+                log_probs_dev = self.forward(tokenized['dev'])
                 loss_on_dev = self.loss(log_probs_dev, torch.LongTensor(y['dev'])).detach().numpy()
                 dev_losses.append(loss_on_dev)
 
                 # evaluation sur le train
-                log_probs_train = self.forward(tokens['train'])
+                log_probs_train = self.forward(tokenized['train'])
                 loss_on_train = self.loss(log_probs_train, torch.LongTensor(y['train'])).detach().numpy()
                 train_losses.append(loss_on_train)
 
@@ -317,7 +315,7 @@ class BertMLP(nn.Module):
 
     def evaluation(self, data_set):
         y_true = torch.tensor(y[data_set])
-        y_pred = self.predict(tokens[data_set])
+        y_pred = self.predict(tokenized[data_set])
 
         torch.save(torch.tensor(confusion_matrix(y_true, y_pred)), data_set+'_confmat.pt')
         print(confusion_matrix(y_true, y_pred))
@@ -360,7 +358,7 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
 # In[64]:
 
 
-predict_train = discourse_relation_mlp.predict(tokens['train'])
+predict_train = discourse_relation_mlp.predict(tokenized['train'])
 print(predict_train)
 print(i2gold_class)
 
