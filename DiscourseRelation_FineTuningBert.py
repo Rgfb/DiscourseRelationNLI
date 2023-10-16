@@ -164,6 +164,7 @@ class BertMLP(nn.Module):
     def forward(self, tokens):
 
         print(bert_model(**tokens))
+        print(len(bert_model(**tokens)))
         vect_sentences = bert_model(**tokens).last_hidden_state[:, 0, :]
         
         linear_comb = self.w1(vect_sentences)
