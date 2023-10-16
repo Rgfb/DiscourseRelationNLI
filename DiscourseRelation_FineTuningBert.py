@@ -78,8 +78,8 @@ bert_model = AutoModel.from_pretrained(model_name)
 # Chargement des fichiers pdtb2 test/train/dev vectorisés
 # Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
 
-Arg1, Arg2 = defaultdict(lambda:[]), defaultdict(lambda:[])
-X, y = defaultdict(lambda:[]), defaultdict(lambda:[])
+Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
+X, y = defaultdict(lambda: []), defaultdict(lambda: [])
 shuffle(pdtb2)
 for example in pdtb2[:100]:
     if example['Relation'] == 'Implicit':
@@ -88,6 +88,32 @@ for example in pdtb2[:100]:
         y[cb_split_sec2set[int(example['Section'])]].append(example['ConnHeadSemClass1'].split('.')[0])
 
 print(Arg1['train'][0], Arg2['train'][0], y['train'][0])
+
+
+# In[32]:
+
+
+# ouverture du csv associé au test du SNLI
+snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_test.txt", sep="\t")
+
+# les colonnes qui nous intéressent :
+#   les 2 phrases (dans l'ordre)
+#   la goldclass
+snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
+
+Arg1_nli = []
+Arg2_nli = []
+y_nli = []
+for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], snli_test['sentence2']):
+    if gold != '-':
+        if isinstance(sent2, float):
+            print(sent1, '\n', sent2, '\n', gold, '\n')
+        else:
+            Arg1['snli test'].append(sent1)
+            Arg2['snli test'].append(sent2)
+            y_nli.append(gold)
+
+print(Arg1_nli[0], Arg2_nli[0], y_nli[0])
 
 
 # In[69]:
@@ -111,10 +137,16 @@ print("test :", Counter(y['test']))
 # In[10]:
 # tokenisation des 3 sets
 
-tokens_dev = tokenizer(Arg1['dev'], Arg2['dev'], truncation=True, max_length=128,
-                       return_tensors="pt", padding='max_length')
-tokens_train = tokenizer(Arg1['train'], Arg2['train'], truncation=True, max_length=128,
-                         return_tensors="pt", padding='max_length')
+tokens = {'dev': tokenizer(Arg1['dev'], Arg2['dev'], truncation=True, max_length=128,
+                           return_tensors="pt", padding='max_length'),
+          'test': tokenizer(Arg1['test'], Arg2['test'], truncation=True, max_length=128,
+                            return_tensors="pt", padding='max_length'),
+          'train': tokenizer(Arg1['train'], Arg2['train'], truncation=True, max_length=128,
+                             return_tensors="pt", padding='max_length'),
+          'snli test': tokenizer(Arg1['snli test'], Arg2['snli test'], truncation=True, max_length=128,
+                                 return_tensors="pt", padding='max_length')
+          }
+
 
 # création d'une correspondance (goldclass <-> entier) à l'aide :
 # - d'une liste i2gold_class qui a un entier associe une class
@@ -151,7 +183,7 @@ for s in ['test', 'train', 'dev']:
 class BertMLP(nn.Module):
 
     def __init__(self, first_hidden_layer_size, size_of_batch, dropout, size_of_input=768,
-                 num_tokens=128, num_classes=len(i2gold_class), reg=50, loss=nn.NLLLoss()):
+                 num_tokens=128, num_classes=len(i2gold_class), reg=5, loss=nn.NLLLoss()):
           
         super(BertMLP, self).__init__()
 
@@ -170,20 +202,12 @@ class BertMLP(nn.Module):
 
     def forward(self, tokens):
 
-        """print(bert_model(**tokens))
-        print(len(bert_model(**tokens)))
-        print(bert_model(**tokens)[0].shape)
-        print(bert_model(**tokens)[1].shape)"""
         vect_sentences = bert_model(**tokens)[0][:, 0, :]
         
         linear_comb = self.w1(vect_sentences)
         drop = self.dropout(linear_comb)
         out = torch.relu(drop)
-    
-        """linear_comb = self.w2(out)
-        drop = self.dropout(linear_comb)
-        out = torch.tanh(drop)"""
-    
+
         linear_comb = self.w3(out)
         drop = self.dropout(linear_comb)
         log_prob = F.log_softmax(drop, dim=1)
@@ -265,12 +289,12 @@ class BertMLP(nn.Module):
                 # pour pouvoir comparer l'évolution des 2
 
                 # evaluation sur le dev
-                log_probs_dev = self.forward(tokens_dev)
+                log_probs_dev = self.forward(tokens['dev'])
                 loss_on_dev = self.loss(log_probs_dev, torch.LongTensor(y['dev'])).detach().numpy()
                 dev_losses.append(loss_on_dev)
 
                 # evaluation sur le train
-                log_probs_train = self.forward(tokens_train)
+                log_probs_train = self.forward(tokens['train'])
                 loss_on_train = self.loss(log_probs_train, torch.LongTensor(y['train'])).detach().numpy()
                 train_losses.append(loss_on_train)
 
@@ -284,21 +308,18 @@ class BertMLP(nn.Module):
 
         return dev_losses, train_losses
       
-    def predict(self, arg1, arg2):
+    def predict(self, tokens):
         i = 0
         predictions = torch.tensor([])
-
-        while i < len(arg1):
-            tokens = tokenizer(arg1[i:i+self.size_of_batch], arg2[i:i+self.size_of_batch], truncation=True,
-                               max_length=self.num_tokens, return_tensors="pt", padding='max_length')
-            log_probs = self.forward(tokens)
+        while i < len(tokens):
+            log_probs = self.forward(tokens[i:i+self.size_of_batch])
             i += self.size_of_batch
             predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
         return predictions
 
     def evaluation(self, data_set):
         y_true = torch.tensor(y[data_set])
-        y_pred = self.predict(Arg1[data_set], Arg2[data_set])
+        y_pred = self.predict(tokens[data_set])
 
         torch.save(torch.tensor(confusion_matrix(y_true, y_pred)), data_set+'_confmat.pt')
         print(confusion_matrix(y_true, y_pred))
@@ -335,13 +356,13 @@ l2_reg = 0.0001
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, size_of_samples=200)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, size_of_samples=200, nb_epoch=5)
 
 
 # In[64]:
 
 
-predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
+predict_train = discourse_relation_mlp.predict(tokens['train'])
 print(predict_train)
 print(i2gold_class)
 
@@ -388,36 +409,11 @@ torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 # discourse_relation_mlp = torch.load('fourth_model.pth')
 
 
-# In[32]:
-
-
-# ouverture du csv associé au test du SNLI
-snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_test.txt", sep="\t")
-
-# les colonnes qui nous intéressent : 
-#   les 2 phrases (dans l'ordre)
-#   la goldclass
-snli_test = snli_test[['gold_label','sentence1','sentence2']]
-
-Arg1_nli = []
-Arg2_nli = []
-y_nli = []
-for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], snli_test['sentence2']):
-    if gold != '-':
-        if isinstance(sent2, float):
-            print(sent1, '\n', sent2, '\n', gold, '\n')
-        else:
-            Arg1_nli.append(sent1)
-            Arg2_nli.append(sent2)
-            y_nli.append(gold)
-            
-print(Arg1_nli[0], Arg2_nli[0], y_nli[0])
-
 
 # In[42]:
 
 
-predict_NLI = discourse_relation_mlp.predict(Arg1_nli, Arg2_nli)
+predict_NLI = discourse_relation_mlp.predict(tokens['snli test'])
 print(predict_NLI)
 
 
