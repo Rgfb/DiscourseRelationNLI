@@ -163,11 +163,11 @@ class BertMLP(nn.Module):
 
     def forward(self, tokens):
 
-        print(bert_model(**tokens))
+        """print(bert_model(**tokens))
         print(len(bert_model(**tokens)))
         print(bert_model(**tokens)[0].shape)
-        print(bert_model(**tokens)[1].shape)
-        vect_sentences = bert_model(**tokens).last_hidden_state[:, 0, :]
+        print(bert_model(**tokens)[1].shape)"""
+        vect_sentences = bert_model(**tokens)[0][:, 0, :]
         
         linear_comb = self.w1(vect_sentences)
         drop = self.dropout(linear_comb)
