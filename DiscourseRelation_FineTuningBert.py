@@ -258,6 +258,8 @@ class BertMLP(nn.Module):
             while i < len(y_sample):
                 # input_vectors : les vecteurs contenant les ids et les masks pour chaque exemple
                 # gold_classes : les goldclass associées
+                print(tokenized['train'])
+                print(tokenized['train'].shape)
                 tokens, gold_classes = (tokenized['train'][i: i+self.size_of_batch],
                                         torch.LongTensor(y_sample[i: i+self.size_of_batch]))
 
