@@ -163,6 +163,7 @@ class BertMLP(nn.Module):
 
     def forward(self, tokens):
 
+        print(bert_model(**tokens))
         vect_sentences = bert_model(**tokens).last_hidden_state[:, 0, :]
         
         linear_comb = self.w1(vect_sentences)
@@ -317,7 +318,7 @@ for arg1, arg2, label in zip(Arg1['train'], Arg2['train'], y['train']):
 
 
 # création du classifieur
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=400, second_hidden_layer_size=200, size_of_batch=50, dropout=0.3, loss=nn.NLLLoss())
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=400, second_hidden_layer_size=200, size_of_batch=10, dropout=0.3, loss=nn.NLLLoss())
 
 # quelques hyperparametres
 learning_rate = 0.0001
