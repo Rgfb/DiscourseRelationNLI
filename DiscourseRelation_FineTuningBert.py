@@ -101,8 +101,6 @@ snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_test.txt", sep="\t")
 #   la goldclass
 snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
 
-Arg1_nli = []
-Arg2_nli = []
 y_nli = []
 for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], snli_test['sentence2']):
     if gold != '-':
@@ -113,7 +111,7 @@ for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], s
             Arg2['snli test'].append(sent2)
             y_nli.append(gold)
 
-print(Arg1_nli[0], Arg2_nli[0], y_nli[0])
+print(Arg1['snli test'][0], Arg2['snli test'][0], y_nli[0])
 
 
 # In[69]:
