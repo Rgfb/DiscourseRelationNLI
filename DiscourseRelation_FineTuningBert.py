@@ -81,7 +81,7 @@ bert_model = AutoModel.from_pretrained(model_name)
 Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
 X, y = defaultdict(lambda: []), defaultdict(lambda: [])
 shuffle(pdtb2)
-for example in pdtb2[:1000]:
+for example in pdtb2[:200]:
     if example['Relation'] == 'Implicit':
         Arg1[cb_split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
         Arg2[cb_split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
@@ -103,7 +103,7 @@ snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
 
 y_nli = []
 for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], snli_test['sentence2']):
-    if gold != '-':
+    if gold != '-' and len(y_nli) < 200:
         if isinstance(sent2, float):
             print(sent1, '\n', sent2, '\n', gold, '\n')
         else:
@@ -285,16 +285,17 @@ class BertMLP(nn.Module):
 
                 # on regarde la loss sur le dev et sur le train
                 # pour pouvoir comparer l'évolution des 2
+                with torch.no_grad():
 
-                # evaluation sur le dev
-                log_probs_dev = self.forward(tokenized['dev'])
-                loss_on_dev = self.loss(log_probs_dev, torch.LongTensor(y['dev'])).detach().numpy()
-                dev_losses.append(loss_on_dev)
+                    # evaluation sur le dev
+                    log_probs_dev = self.forward(tokenized['dev'])
+                    loss_on_dev = self.loss(log_probs_dev, torch.LongTensor(y['dev'])).detach().numpy()
+                    dev_losses.append(loss_on_dev)
 
-                # evaluation sur le train
-                log_probs_train = self.forward(tokenized['train'])
-                loss_on_train = self.loss(log_probs_train, torch.LongTensor(y['train'])).detach().numpy()
-                train_losses.append(loss_on_train)
+                    # evaluation sur le train
+                    log_probs_train = self.forward(tokenized['train'])
+                    loss_on_train = self.loss(log_probs_train, torch.LongTensor(y['train'])).detach().numpy()
+                    train_losses.append(loss_on_train)
 
                 # early stopping
                 if patience < len(dev_losses) and all([dev_losses[-i-1]<dev_losses[-i] and train_losses[-i]<train_losses[-i-1] for i in range(1, patience+1)]):
@@ -307,15 +308,17 @@ class BertMLP(nn.Module):
         return dev_losses, train_losses
       
     def predict(self, tokens):
-        i=0
+        self.eval()
+        i = 0
         predictions = torch.tensor([])
-        while i < len(tokens['input_ids']):
-            batch_tokens = {'input_ids': tokens['input_ids'][i:i+self.size_of_batch],
-                            'token_type_ids': tokens['token_type_ids'][i:i+self.size_of_batch],
-                            'attention_mask': tokens['attention_mask'][i:i+self.size_of_batch]}
-            log_probs = self.forward(batch_tokens)
-            i+= self.size_of_batch
-            predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
+        with torch.no_grad():
+            while i < len(tokens['input_ids']):
+                batch_tokens = {'input_ids': tokens['input_ids'][i:i+self.size_of_batch],
+                                'token_type_ids': tokens['token_type_ids'][i:i+self.size_of_batch],
+                                'attention_mask': tokens['attention_mask'][i:i+self.size_of_batch]}
+                log_probs = self.forward(batch_tokens)
+                i += self.size_of_batch
+                predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
         return predictions
 
     def evaluation(self, data_set):
@@ -402,7 +405,7 @@ print(predict_NLI[:10])
 print('2')
 
 # In[43]:
-repartition = Counter([(nli_class, i2gold_class[disc_rel]) for nli_class, disc_rel in zip(y_nli, predict_NLI)])
+repartition = Counter([(nli_class, i2gold_class[int(disc_rel)]) for nli_class, disc_rel in zip(y_nli, predict_NLI.tolist())])
 print(repartition)
 
 print('3')
