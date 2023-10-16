@@ -81,7 +81,7 @@ bert_model = AutoModel.from_pretrained(model_name)
 Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
 X, y = defaultdict(lambda: []), defaultdict(lambda: [])
 shuffle(pdtb2)
-for example in pdtb2[:100]:
+for example in pdtb2[:1000]:
     if example['Relation'] == 'Implicit':
         Arg1[cb_split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
         Arg2[cb_split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
@@ -336,8 +336,6 @@ for arg1, arg2, label in zip(Arg1['train'], Arg2['train'], y['train']):
 
 
 # In[63]:
-
-
 # création du classifieur
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, size_of_batch=100, dropout=0.3, loss=nn.NLLLoss())
 
@@ -348,7 +346,7 @@ l2_reg = 0.0001
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, size_of_samples=200, nb_epoch=5)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, size_of_samples=200, nb_epoch=2)
 
 
 # In[64]:
@@ -358,26 +356,15 @@ print(i2gold_class)
 
 
 # In[65]:
-
-
 discourse_relation_mlp.evaluation("train")
 
-
 # In[66]:
-
-
 discourse_relation_mlp.evaluation("dev")
 
-
 # In[67]:
-
-
 discourse_relation_mlp.evaluation("test")
 
-
 # In[29]:
-
-
 # courbe d'evolution de la loss
 abs = list(range(0, len(dev_losses)*discourse_relation_mlp.reg, discourse_relation_mlp.reg))
 plt.plot(abs, dev_losses, label='loss on dev set')
@@ -388,27 +375,33 @@ plt.legend()
 plt.show()
 plt.savefig('BertFineTunedModel.png')
 
+print('0')
 
 # In[ ]:
 # sauvegarde d'un modele
 torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
+
+print('1')
 
 # chargement d'un modele
 # discourse_relation_mlp = torch.load('fourth_model.pth')
 
 # In[42]:
 predict_NLI = discourse_relation_mlp.predict(tokenized['snli test'])
-print(predict_NLI)
+print(predict_NLI[:10])
 
+print('2')
 
 # In[43]:
 repartition = Counter([(nli_class, i2gold_class[disc_rel]) for nli_class, disc_rel in zip(y_nli, predict_NLI)])
 print(repartition)
 
+print('3')
 
 # In[40]:
 print(Counter(y_nli))
 
+print('4')
 
 # In[54]:
 i2nli = ['contradiction', 'entailment', 'neutral']
@@ -421,18 +414,18 @@ ax = sn.heatmap(df_cm, cmap='Blues')
 
 figure = ax.get_figure()
 figure.savefig('AvantNormalisation.png', dpi=400)
-
+print('5')
 
 # In[50]:
 mat1 = mat.T/torch.sum(mat, axis=1)
 print(mat1)
-
 df_cm = DataFrame(mat1, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral'])
 ax = sn.heatmap(df_cm, cmap='Blues')
 
 figure = ax.get_figure()
 figure.savefig('ApresNormalisationSNLI.png', dpi=400)
 
+print('6')
 
 # In[51]:
 mat2 = mat/torch.sum(mat, axis=0)
@@ -443,3 +436,4 @@ ax = sn.heatmap(df_cm, cmap='Blues')
 
 figure = ax.get_figure()
 figure.savefig('ApresNormalisationPDTB.png', dpi=400)
+print('7')
