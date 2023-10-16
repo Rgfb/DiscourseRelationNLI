@@ -352,8 +352,6 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
 
 
 # In[64]:
-
-
 predict_train = discourse_relation_mlp.predict(tokenized['train'])
 print(predict_train)
 print(i2gold_class)
@@ -392,53 +390,31 @@ plt.savefig('BertFineTunedModel.png')
 
 
 # In[ ]:
-
-
 # sauvegarde d'un modele
 torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 
 # chargement d'un modele
 # discourse_relation_mlp = torch.load('fourth_model.pth')
 
-
-
 # In[42]:
-
-
 predict_NLI = discourse_relation_mlp.predict(tokenized['snli test'])
 print(predict_NLI)
 
 
 # In[43]:
-
-
 repartition = Counter([(nli_class, i2gold_class[disc_rel]) for nli_class, disc_rel in zip(y_nli, predict_NLI)])
 print(repartition)
 
 
 # In[40]:
-
-
 print(Counter(y_nli))
 
 
 # In[54]:
-
-
 i2nli = ['contradiction', 'entailment', 'neutral']
 
 mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
 print(mat)
-
-mat1 = mat.T/torch.sum(mat, axis=1)
-print(mat1)
-
-mat2 = mat/torch.sum(mat, axis=0)
-print(mat2.T)
-
-
-# In[53]:
-
 
 df_cm = DataFrame(mat.T, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral'])
 ax = sn.heatmap(df_cm, cmap='Blues')
@@ -448,7 +424,8 @@ figure.savefig('AvantNormalisation.png', dpi=400)
 
 
 # In[50]:
-
+mat1 = mat.T/torch.sum(mat, axis=1)
+print(mat1)
 
 df_cm = DataFrame(mat1, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral'])
 ax = sn.heatmap(df_cm, cmap='Blues')
@@ -458,11 +435,11 @@ figure.savefig('ApresNormalisationSNLI.png', dpi=400)
 
 
 # In[51]:
-
+mat2 = mat/torch.sum(mat, axis=0)
+print(mat2.T)
 
 df_cm = DataFrame(mat2.T, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral'])
 ax = sn.heatmap(df_cm, cmap='Blues')
 
 figure = ax.get_figure()
 figure.savefig('ApresNormalisationPDTB.png', dpi=400)
-
