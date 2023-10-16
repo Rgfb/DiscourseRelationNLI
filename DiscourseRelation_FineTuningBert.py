@@ -321,7 +321,7 @@ for arg1, arg2, label in zip(Arg1['train'], Arg2['train'], y['train']):
 
 
 # création du classifieur
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, size_of_batch=10, dropout=0.3, loss=nn.NLLLoss())
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, size_of_batch=100, dropout=0.3, loss=nn.NLLLoss())
 
 # quelques hyperparametres
 learning_rate = 0.0001
@@ -330,7 +330,7 @@ l2_reg = 0.0001
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, down_sampling=False)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, size_of_samples=200)
 
 
 # In[64]:
