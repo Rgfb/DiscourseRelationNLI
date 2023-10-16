@@ -307,7 +307,16 @@ class BertMLP(nn.Module):
         return dev_losses, train_losses
       
     def predict(self, tokens):
-        return torch.argmax(self.forward(tokens), dim=1)
+        i=0
+        predictions = torch.tensor([])
+        while i < len(tokens['input_ids']):
+            batch_tokens = {'input_ids': tokens['input_ids'][i:i+self.size_of_batch],
+                            'token_type_ids': tokens['token_type_ids'][i:i+self.size_of_batch],
+                            'attention_mask': tokens['attention_mask'][i:i+self.size_of_batch]}
+            log_probs = self.forward(batch_tokens)
+            i+= self.size_of_batch
+            predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
+        return predictions
 
     def evaluation(self, data_set):
         y_true = torch.tensor(y[data_set])
