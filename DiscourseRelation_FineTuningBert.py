@@ -145,7 +145,7 @@ for s in ['test', 'train', 'dev']:
 
 class BertMLP(nn.Module):
 
-    def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, size_of_input=768, num_classes=len(i2gold_class), reg=50, loss=nn.NLLLoss()):
+    def __init__(self, first_hidden_layer_size, size_of_batch, dropout, size_of_input=768, num_classes=len(i2gold_class), reg=50, loss=nn.NLLLoss()):
           
         super(BertMLP, self).__init__()
 
