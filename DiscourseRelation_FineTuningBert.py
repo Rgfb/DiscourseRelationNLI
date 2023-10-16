@@ -156,8 +156,8 @@ class BertMLP(nn.Module):
         self.size_of_batch = size_of_batch
 
         self.w1 = nn.Linear(size_of_input, first_hidden_layer_size)
-        self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
-        self.w3 = nn.Linear(second_hidden_layer_size, num_classes)
+        #self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
+        self.w3 = nn.Linear(first_hidden_layer_size, num_classes)
 
         self.dropout = nn.Dropout(dropout)
 
@@ -173,9 +173,9 @@ class BertMLP(nn.Module):
         drop = self.dropout(linear_comb)
         out = torch.relu(drop)
     
-        linear_comb = self.w2(out)
+        """linear_comb = self.w2(out)
         drop = self.dropout(linear_comb)
-        out = torch.tanh(drop)
+        out = torch.tanh(drop)"""
     
         linear_comb = self.w3(out)
         drop = self.dropout(linear_comb)
@@ -189,7 +189,7 @@ class BertMLP(nn.Module):
     # down_sampling : booleen pour savoir si on fait du down sampling
     # size_of_samples : taille des samples lorsqu'on fait du down sampling
 
-    def training_step(self, optimizer, nb_epoch = 50000, patience = 3, reg = 20, down_sampling = True, size_of_samples = 800):
+    def training_step(self, optimizer, nb_epoch=50000, patience=3, reg=1, down_sampling=True, size_of_samples=800):
         # les listes qui contiendront les valeurs de la loss sur le dev et le train pour chaque époque
         dev_losses = []
         train_losses = []
@@ -321,7 +321,7 @@ for arg1, arg2, label in zip(Arg1['train'], Arg2['train'], y['train']):
 
 
 # création du classifieur
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=400, second_hidden_layer_size=200, size_of_batch=10, dropout=0.3, loss=nn.NLLLoss())
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, size_of_batch=10, dropout=0.3, loss=nn.NLLLoss())
 
 # quelques hyperparametres
 learning_rate = 0.0001
@@ -330,7 +330,7 @@ l2_reg = 0.0001
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, down_sampling=False)
 
 
 # In[64]:
