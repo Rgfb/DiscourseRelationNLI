@@ -81,7 +81,7 @@ bert_model = AutoModel.from_pretrained(model_name)
 Arg1, Arg2 = defaultdict(lambda:[]), defaultdict(lambda:[])
 X, y = defaultdict(lambda:[]), defaultdict(lambda:[])
 shuffle(pdtb2)
-for example in pdtb2:
+for example in pdtb2[:100]:
     if example['Relation'] == 'Implicit':
         Arg1[cb_split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
         Arg2[cb_split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
@@ -109,7 +109,12 @@ print("test :", Counter(y['test']))
 
 
 # In[10]:
+# tokenisation des 3 sets
 
+tokens_dev = tokenizer(Arg1['dev'], Arg2['dev'], truncation=True, max_length=128,
+                       return_tensors="pt", padding='max_length')
+tokens_train = tokenizer(Arg1['train'], Arg2['train'], truncation=True, max_length=128,
+                         return_tensors="pt", padding='max_length')
 
 # création d'une correspondance (goldclass <-> entier) à l'aide :
 # - d'une liste i2gold_class qui a un entier associe une class
@@ -145,7 +150,8 @@ for s in ['test', 'train', 'dev']:
 
 class BertMLP(nn.Module):
 
-    def __init__(self, first_hidden_layer_size, size_of_batch, dropout, size_of_input=768, num_classes=len(i2gold_class), reg=50, loss=nn.NLLLoss()):
+    def __init__(self, first_hidden_layer_size, size_of_batch, dropout, size_of_input=768,
+                 num_tokens=128, num_classes=len(i2gold_class), reg=50, loss=nn.NLLLoss()):
           
         super(BertMLP, self).__init__()
 
@@ -153,10 +159,11 @@ class BertMLP(nn.Module):
         
         self.loss = loss
 
+        self.num_tokens = num_tokens
         self.size_of_batch = size_of_batch
 
         self.w1 = nn.Linear(size_of_input, first_hidden_layer_size)
-        #self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
+        # self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
         self.w3 = nn.Linear(first_hidden_layer_size, num_classes)
 
         self.dropout = nn.Dropout(dropout)
@@ -194,7 +201,7 @@ class BertMLP(nn.Module):
         dev_losses = []
         train_losses = []
 
-        for epoch in range(nb_epoch) :
+        for epoch in range(nb_epoch):
 
             # est-ce qu'on veut faire du downsampling ou non
             if down_sampling:
@@ -213,7 +220,8 @@ class BertMLP(nn.Module):
                         arg2_sample.append(vector[1])
                         y_sample.append(label)
 
-            else: arg1_sample, arg2_sample, y_sample = Arg1['train'], Arg2['train'], y['train']
+            else:
+                arg1_sample, arg2_sample, y_sample = Arg1['train'], Arg2['train'], y['train']
 
             # melange du sample pour ne pas toujours s'entrainer sur les labels dans le même ordre
             sample = list(zip(arg1_sample, arg2_sample, y_sample))
@@ -230,10 +238,10 @@ class BertMLP(nn.Module):
                 # gold_classes : les goldclass associées
                 arg1, arg2, gold_classes = arg1_sample[i: i+self.size_of_batch], arg2_sample[i: i+self.size_of_batch], torch.LongTensor(y_sample[i: i+self.size_of_batch])
 
-                tokens = tokenizer(arg1, arg2, truncation=True, max_length=512,
+                tokens = tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
                                    return_tensors="pt", padding='max_length')
 
-                i += discourse_relation_mlp.size_of_batch
+                i += self.size_of_batch
 
                 optimizer.zero_grad()
 
@@ -257,15 +265,11 @@ class BertMLP(nn.Module):
                 # pour pouvoir comparer l'évolution des 2
 
                 # evaluation sur le dev
-                tokens_dev = tokenizer(Arg1['dev'], Arg2['dev'], truncation=True, max_length = 512,
-                                       return_tensors="pt", padding='max_length')
                 log_probs_dev = self.forward(tokens_dev)
                 loss_on_dev = self.loss(log_probs_dev, torch.LongTensor(y['dev'])).detach().numpy()
                 dev_losses.append(loss_on_dev)
 
                 # evaluation sur le train
-                tokens_train = tokenizer(Arg1['train'], Arg2['train'], truncation=True, max_length = 512,
-                                         return_tensors="pt", padding='max_length')
                 log_probs_train = self.forward(tokens_train)
                 loss_on_train = self.loss(log_probs_train, torch.LongTensor(y['train'])).detach().numpy()
                 train_losses.append(loss_on_train)
@@ -285,7 +289,8 @@ class BertMLP(nn.Module):
         predictions = torch.tensor([])
 
         while i < len(arg1):
-            tokens = tokenizer(arg1[i:i+self.size_of_batch], arg2[i:i+self.size_of_batch], truncation=True, max_length = 512, return_tensors="pt", padding='max_length')
+            tokens = tokenizer(arg1[i:i+self.size_of_batch], arg2[i:i+self.size_of_batch], truncation=True,
+                               max_length=self.num_tokens, return_tensors="pt", padding='max_length')
             log_probs = self.forward(tokens)
             i += self.size_of_batch
             predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
