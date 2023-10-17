@@ -57,9 +57,11 @@ cb_split_sec2set = {}
 for key, value in cb_split_set2sec.items():
     for section in value:
         cb_split_sec2set[section] = key
+
+"""
 print(cb_split_set2sec)
 print(cb_split_sec2set)
-
+"""
 
 # In[4]:
 model_name = "bert-base-uncased"
@@ -77,14 +79,14 @@ Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
 
 Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
 X, y = defaultdict(lambda: []), defaultdict(lambda: [])
-shuffle(pdtb2)
-for example in pdtb2[:200]:
+#shuffle(pdtb2)
+for example in pdtb2:
     if example['Relation'] == 'Implicit':
         Arg1[cb_split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
         Arg2[cb_split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
         y[cb_split_sec2set[int(example['Section'])]].append(example['ConnHeadSemClass1'].split('.')[0])
 
-print(Arg1['train'][0], Arg2['train'][0], y['train'][0])
+#print(Arg1['train'][0], Arg2['train'][0], y['train'][0])
 
 
 # In[32]:
@@ -111,25 +113,28 @@ for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], s
             Arg2['snli test'].append(sent2)
             y_nli.append(gold)
 
-print(Arg1['snli test'][0], Arg2['snli test'][0], y_nli[0])
+# print(Arg1['snli test'][0], Arg2['snli test'][0], y_nli[0])
 
 
 # In[69]:
 
 
 # nombre d'exemples par set
+"""
 print(len(Arg1['train']), len(Arg2['train']), len(y['train']))
 print(len(Arg1['dev']), len(Arg2['dev']), len(y['dev']))
 print(len(Arg1['test']), len(Arg2['test']), len(y['test']))
-
+"""
 
 # In[70]:
 
 
 # distribution des labels
+"""
 print("train :", Counter(y['train']))
 print("dev :", Counter(y['dev']))
 print("test :", Counter(y['test']))
+"""
 
 
 # In[10]:
@@ -212,7 +217,7 @@ class BertMLP(nn.Module):
     # down_sampling : booleen pour savoir si on fait du down sampling
     # size_of_samples : taille des samples lorsqu'on fait du down sampling
 
-    def training_step(self, optimizer, nb_epoch=50000, patience=3, reg=1, down_sampling=True, size_of_samples=800):
+    def training_step(self, optimizer, nb_epoch=50000, patience=2, reg=1, down_sampling=True, size_of_samples=800):
         # les listes qui contiendront les valeurs de la loss sur le dev et le train pour chaque époque
         dev_losses = []
         train_losses = []
@@ -352,7 +357,7 @@ l2_reg = 0.0001
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, size_of_samples=200, nb_epoch=2)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=20000, down_sampling=False)
 
 
 # In[64]:
@@ -372,16 +377,18 @@ discourse_relation_mlp.evaluation("test")
 
 # In[29]:
 # courbe d'evolution de la loss
-abs = list(range(0, len(dev_losses)*discourse_relation_mlp.reg, discourse_relation_mlp.reg))
+def plot_loss():
+    abs = list(range(0, len(dev_losses)*discourse_relation_mlp.reg, discourse_relation_mlp.reg))
+    loss_fig = plt.figure("Figure 1")
+    plt.plot(abs, dev_losses, label='loss on dev set')
+    plt.plot(abs, train_losses, label='loss on train set')
+    plt.ylabel('loss')
+    plt.xlabel('nombre d\'époques')
+    plt.legend()
+    return loss_fig
 
-fig1 = plt.figure("Figure 1")
-plt.plot(abs, dev_losses, label='loss on dev set')
-plt.plot(abs, train_losses, label='loss on train set')
-plt.ylabel('loss')
-plt.xlabel('nombre d\'époques')
-plt.legend()
-plt.show()
-plt.savefig('BertFineTunedModel.png')
+loss_fig = plot_loss
+loss_fig.savefig('BertFineTunedModel.png')
 
 
 # In[ ]:
@@ -393,16 +400,16 @@ torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 
 # In[42]:
 predict_NLI = discourse_relation_mlp.predict(tokenized['snli test'])
-print(predict_NLI[:10])
+# print(predict_NLI[:10])
 
 
 # In[43]:
 repartition = Counter([(nli_class, i2gold_class[int(disc_rel)]) for nli_class, disc_rel in zip(y_nli, predict_NLI.tolist())])
-print(repartition)
+# print(repartition)
 
 
 # In[40]:
-print(Counter(y_nli))
+# print(Counter(y_nli))
 
 # In[54]:
 i2nli = ['contradiction', 'entailment', 'neutral']
@@ -411,9 +418,8 @@ i2nli = ['contradiction', 'entailment', 'neutral']
 def plot_mat(matrix, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral']):
     df_cm = DataFrame(matrix, index=index, columns=columns)
     ax = sn.heatmap(df_cm, cmap='Blues')
-
-    figure = ax.get_figure()
-    return figure
+    heatmap = ax.get_figure()
+    return heatmap
 
 
 mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
