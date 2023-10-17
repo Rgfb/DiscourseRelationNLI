@@ -1,27 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
+"""
+A FAIRE
 
-# In[1]:
+Une classe pour le traitement des données (PDTB (qui pourra notamment gérer les differents splits..) et SNLI)
+factoriser tout ce qui peut l'etre
 
+mettre des "with torch.no_grad" la ou c'est possible
 
-# A FAIRE
+faire une methode pour les heatmap
 
-# Une classe pour le traitement des données (PDTB (pour gérer les différents splits ..) et SNLI)
-# factoriser tout ce qui peut l'etre
-
-# optimiser le max_length du tokenizer (est ce qu'il n'y a pas trop de padding?)
-# mettre des "with torch.no_grad" la ou on peut (predict et evaluation ?)
-
-# faire une methode pour les heatmap
-
-# Commenter un peu la fin ...
+Commenter un peu la fin ...
+"""
 
 
-# In[38]:
-
-
-# Installations & Imports
-
+"""
+--------------------- Installations et Imports -------------------------
+"""
 import csv
 
 from transformers import AutoModel, AutoTokenizer
@@ -45,6 +40,7 @@ import pickle
 
 # In[2]:
 
+MAX_LENGTH = 128
 
 pdtb2 = []
 reader = csv.DictReader(open('pdtb2.csv', 'r'))
@@ -53,8 +49,9 @@ for example in reader:
 
 
 # In[3]:
-
-
+"""
+-------------------- Split ------------------------------
+"""
 cb_split_set2sec = {"dev": [0, 1, 23, 24], "test": [21, 22], "train": list(range(2, 21))}
 cb_split_sec2set = {}
 for key, value in cb_split_set2sec.items():
@@ -65,8 +62,6 @@ print(cb_split_sec2set)
 
 
 # In[4]:
-
-
 model_name = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 bert_model = AutoModel.from_pretrained(model_name)
@@ -75,8 +70,10 @@ bert_model = AutoModel.from_pretrained(model_name)
 # In[31]:
 
 
-# Chargement des fichiers pdtb2 test/train/dev vectorisés
-# Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
+"""
+Chargement du fichier pdtb2
+Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
+"""
 
 Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
 X, y = defaultdict(lambda: []), defaultdict(lambda: [])
@@ -91,14 +88,17 @@ print(Arg1['train'][0], Arg2['train'][0], y['train'][0])
 
 
 # In[32]:
+"""
+-------------------- ouverture du csv associé au test du SNLI ------------------------------
 
+les colonnes qui nous intéressent :
+    les 2 phrases (dans l'ordre)
+    la goldclass
+"""
 
-# ouverture du csv associé au test du SNLI
 snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_test.txt", sep="\t")
 
-# les colonnes qui nous intéressent :
-#   les 2 phrases (dans l'ordre)
-#   la goldclass
+
 snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
 
 y_nli = []
@@ -133,17 +133,17 @@ print("test :", Counter(y['test']))
 
 
 # In[10]:
-# tokenisation des 3 sets
+# tokenisation des sets
 
-tokenized = {'dev': tokenizer(Arg1['dev'], Arg2['dev'], truncation=True, max_length=128,
-                           return_tensors="pt", padding='max_length'),
-          'test': tokenizer(Arg1['test'], Arg2['test'], truncation=True, max_length=128,
-                            return_tensors="pt", padding='max_length'),
-          'train': tokenizer(Arg1['train'], Arg2['train'], truncation=True, max_length=128,
-                             return_tensors="pt", padding='max_length'),
-          'snli test': tokenizer(Arg1['snli test'], Arg2['snli test'], truncation=True, max_length=128,
-                                 return_tensors="pt", padding='max_length')
-          }
+tokenized = {'dev': tokenizer(Arg1['dev'], Arg2['dev'], truncation=True, max_length=MAX_LENGTH,
+                              return_tensors="pt", padding='max_length'),
+             'test': tokenizer(Arg1['test'], Arg2['test'], truncation=True, max_length=MAX_LENGTH,
+                               return_tensors="pt", padding='max_length'),
+             'train': tokenizer(Arg1['train'], Arg2['train'], truncation=True, max_length=MAX_LENGTH,
+                                return_tensors="pt", padding='max_length'),
+             'snli test': tokenizer(Arg1['snli test'], Arg2['snli test'], truncation=True, max_length=MAX_LENGTH,
+                                    return_tensors="pt", padding='max_length')
+             }
 
 
 # création d'une correspondance (goldclass <-> entier) à l'aide :
@@ -155,33 +155,27 @@ gold_class2i = {gold_class : i for i, gold_class in enumerate(i2gold_class)}
 print(i2gold_class)
 print(gold_class2i)
 
-
-# In[58]:
-
-
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
 for s in ['test', 'train', 'dev']:
     y[s] = [gold_class2i[gold_class] for gold_class in y[s]]
 
 
-# In[62]:
 
+"""
+----------------------- Le Modèle ---------------------------------
 
-# un MLP qui prend en entrée une phrase vectorisée et renvoie la liste des probas pour certaines classes du PDTB2
-# (à voir quelles classes nous intéressent le plus ..)
+un MLP qui prend en entrée une phrase tokenisée et renvoie la liste des probas pour certaines classes du PDTB2
+(à voir quelles classes nous intéressent le plus ..)
 
-# Pour l'instant :
-#   2 couches cachées
-#   relu en premiere fonction d'activation
-#   tanh en deuxieme fonction d'activation
-#   du dropout à chaque couche (sauf à l'entrée)
+"""
+
 
 
 class BertMLP(nn.Module):
 
     def __init__(self, first_hidden_layer_size, size_of_batch, dropout, size_of_input=768,
-                 num_tokens=128, num_classes=len(i2gold_class), reg=5, loss=nn.NLLLoss()):
+                 num_tokens=MAX_LENGTH, num_classes=len(i2gold_class), reg=5, loss=nn.NLLLoss()):
           
         super(BertMLP, self).__init__()
 
@@ -277,8 +271,7 @@ class BertMLP(nn.Module):
                 loss.backward()
                 optimizer.step()
 
-            # print régulier pour savoir ou on en est
-            # (ça peut être un peu long ..)
+            # print régulier de la loss sur le train et le dev
             if epoch % reg == 0:
                 # mode "eval", pas de dropout ici
                 self.eval()
@@ -322,6 +315,7 @@ class BertMLP(nn.Module):
         return predictions
 
     def evaluation(self, data_set):
+
         y_true = torch.tensor(y[data_set])
         y_pred = self.predict(tokenized[data_set])
 
@@ -379,6 +373,8 @@ discourse_relation_mlp.evaluation("test")
 # In[29]:
 # courbe d'evolution de la loss
 abs = list(range(0, len(dev_losses)*discourse_relation_mlp.reg, discourse_relation_mlp.reg))
+
+fig1 = plt.figure("Figure 1")
 plt.plot(abs, dev_losses, label='loss on dev set')
 plt.plot(abs, train_losses, label='loss on train set')
 plt.ylabel('loss')
@@ -387,13 +383,10 @@ plt.legend()
 plt.show()
 plt.savefig('BertFineTunedModel.png')
 
-print('0')
 
 # In[ ]:
 # sauvegarde d'un modele
 torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
-
-print('1')
 
 # chargement d'un modele
 # discourse_relation_mlp = torch.load('fourth_model.pth')
@@ -402,50 +395,38 @@ print('1')
 predict_NLI = discourse_relation_mlp.predict(tokenized['snli test'])
 print(predict_NLI[:10])
 
-print('2')
 
 # In[43]:
 repartition = Counter([(nli_class, i2gold_class[int(disc_rel)]) for nli_class, disc_rel in zip(y_nli, predict_NLI.tolist())])
 print(repartition)
 
-print('3')
 
 # In[40]:
 print(Counter(y_nli))
 
-print('4')
-
 # In[54]:
 i2nli = ['contradiction', 'entailment', 'neutral']
 
+
+def plot_mat(matrix, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral']):
+    df_cm = DataFrame(matrix, index=index, columns=columns)
+    ax = sn.heatmap(df_cm, cmap='Blues')
+
+    figure = ax.get_figure()
+    return figure
+
+
 mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
 print(mat)
-
-df_cm = DataFrame(mat.T, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral'])
-ax = sn.heatmap(df_cm, cmap='Blues')
-
-figure = ax.get_figure()
+figure = plot_mat(mat.T)
 figure.savefig('AvantNormalisation.png', dpi=400)
-print('5')
 
-# In[50]:
 mat1 = mat.T/torch.sum(mat, axis=1)
 print(mat1)
-df_cm = DataFrame(mat1, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral'])
-ax = sn.heatmap(df_cm, cmap='Blues')
-
-figure = ax.get_figure()
+figure = plot_mat(mat1)
 figure.savefig('ApresNormalisationSNLI.png', dpi=400)
 
-print('6')
-
-# In[51]:
 mat2 = mat/torch.sum(mat, axis=0)
 print(mat2.T)
-
-df_cm = DataFrame(mat2.T, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral'])
-ax = sn.heatmap(df_cm, cmap='Blues')
-
-figure = ax.get_figure()
+figure = plot_mat(mat2.T)
 figure.savefig('ApresNormalisationPDTB.png', dpi=400)
-print('7')
