@@ -73,8 +73,6 @@ bert_model = AutoModel.from_pretrained(model_name)
 
 
 # In[31]:
-
-
 """
 Chargement du fichier pdtb2
 Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
@@ -82,7 +80,7 @@ Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
 
 Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
 X, y = defaultdict(lambda: []), defaultdict(lambda: [])
-#shuffle(pdtb2)
+shuffle(pdtb2)
 for example in pdtb2[:300]:
     if example['Relation'] == 'Implicit':
         Arg1[cb_split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
@@ -115,11 +113,6 @@ for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], s
             Arg2['snli test'].append(sent2)
             y_nli.append(gold)
 
-# print(Arg1['snli test'][0], Arg2['snli test'][0], y_nli[0])
-
-
-# In[69]:
-
 
 # nombre d'exemples par set
 """
@@ -127,9 +120,6 @@ print(len(Arg1['train']), len(Arg2['train']), len(y['train']))
 print(len(Arg1['dev']), len(Arg2['dev']), len(y['dev']))
 print(len(Arg1['test']), len(Arg2['test']), len(y['test']))
 """
-
-# In[70]:
-
 
 # distribution des labels
 """
