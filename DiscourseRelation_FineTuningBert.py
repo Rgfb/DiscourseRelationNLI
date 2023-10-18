@@ -190,7 +190,7 @@ class BertMLP(nn.Module):
 
     def forward(self, tokens):
 
-        vect_sentences = bert_model(**tokens)[0][:, 0, :].to(device)
+        vect_sentences = bert_model(**tokens.to(device))[0][:, 0, :].to(device)
         
         linear_comb = self.w1(vect_sentences).to(device)
         drop = self.dropout(linear_comb).to(device)
@@ -349,7 +349,7 @@ l2_reg = 0.0001
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=20000, down_sampling=False)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=20000, down_sampling=False).to(device)
 
 
 # In[64]:
