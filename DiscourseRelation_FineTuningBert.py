@@ -308,7 +308,7 @@ class BertMLP(nn.Module):
                                          return_tensors="pt", padding='max_length')
                 log_probs = self.forward(batch_tokens.to(device))
                 i += self.size_of_batch
-                predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
+                predictions = torch.cat((predictions.to(device), torch.argmax(log_probs, dim=1).to(device)))
         return predictions
 
     def evaluation(self, data_set):
