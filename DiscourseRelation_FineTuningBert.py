@@ -276,13 +276,11 @@ class BertMLP(nn.Module):
                 with torch.no_grad():
 
                     # evaluation sur le dev
-                    log_probs_dev = self.forward(tokenized['dev'])
-                    loss_on_dev = self.loss(log_probs_dev, torch.LongTensor(y['dev']).to(device)).cpu().detach().numpy()
+                    loss_on_dev = self.computing_loss('dev')
                     dev_losses.append(loss_on_dev)
 
                     # evaluation sur le train
-                    log_probs_train = self.forward(tokenized['train'])
-                    loss_on_train = self.loss(log_probs_train, torch.LongTensor(y['train']).to(device)).cpu().detach().numpy()
+                    loss_on_train = self.computing_loss('train')
                     train_losses.append(loss_on_train)
 
                 # early stopping
@@ -294,7 +292,21 @@ class BertMLP(nn.Module):
                 print(f"Epoch {epoch}\nloss on train is {loss_on_train}\nloss on dev is {loss_on_dev}\n")
 
         return dev_losses, train_losses
-      
+
+    def computing_loss(self, data_set):
+        self.eval()
+        i = 0
+        loss = 0
+        with torch.no_grad():
+            while i < len(Arg1[data_set]):
+                arg1, arg2 = Arg1[data_set][i: i+self.size_of_batch], Arg2[data_set][i: i+self.size_of_batch]
+                batch_tokens = tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
+                                         return_tensors="pt", padding='max_length')
+                log_probs = self.forward(batch_tokens.to(device))
+                loss += self.loss(log_probs, torch.LongTensor(y['dev'][i: i+self.size_of_batch]).to(device)).cpu().detach().numpy()
+                i += self.size_of_batch
+        return loss
+
     def predict(self, sentences1, sentences2):
         self.eval()
         i = 0
