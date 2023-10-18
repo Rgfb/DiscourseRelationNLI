@@ -373,6 +373,7 @@ discourse_relation_mlp.evaluation("test")
 
 
 def plot_loss():
+    plt.figure()
     abs = list(range(0, len(dev_losses)*discourse_relation_mlp.reg, discourse_relation_mlp.reg))
     loss_fig = plt.figure("Figure 1")
     plt.plot(abs, dev_losses, label='loss on dev set')
@@ -412,6 +413,7 @@ i2nli = ['contradiction', 'entailment', 'neutral']
 
 
 def plot_mat(matrix, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral']):
+    plt.figure()
     df_cm = DataFrame(matrix, index=index, columns=columns)
     ax = sn.heatmap(df_cm, cmap='Blues')
     heatmap = ax.get_figure()
