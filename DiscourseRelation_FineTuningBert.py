@@ -190,7 +190,7 @@ class BertMLP(nn.Module):
 
     def forward(self, tokens):
 
-        vect_sentences = bert_model(**tokens)[0][:, 0, :].to(device)
+        vect_sentences = bert_model(**tokens.to(device))[0][:, 0, :].to(device)
         
         linear_comb = self.w1(vect_sentences).to(device)
         drop = self.dropout(linear_comb).to(device)
