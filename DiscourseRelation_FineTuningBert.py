@@ -303,7 +303,7 @@ class BertMLP(nn.Module):
                 batch_tokens = tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
                                          return_tensors="pt", padding='max_length')
                 log_probs = self.forward(batch_tokens.to(device))
-                loss += self.loss(log_probs, torch.LongTensor(y['dev'][i: i+self.size_of_batch]).to(device)).cpu().detach().numpy()
+                loss += self.loss(log_probs, torch.LongTensor(y[data_set][i: i+self.size_of_batch]).to(device)).cpu().detach().numpy()
                 i += self.size_of_batch
         return loss
 
