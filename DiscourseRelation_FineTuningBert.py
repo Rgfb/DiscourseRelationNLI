@@ -43,7 +43,7 @@ import pickle
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(device)
 
-MAX_LENGTH = 128
+MAX_LENGTH = 256
 
 pdtb2 = []
 reader = csv.DictReader(open('pdtb2.csv', 'r'))
@@ -103,7 +103,7 @@ snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
 
 y_nli = []
 for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], snli_test['sentence2']):
-    if gold != '-' and len(y_nli) < 200:
+    if gold != '-':
         if isinstance(sent2, float):
             print(sent1, '\n', sent2, '\n', gold, '\n')
         else:
