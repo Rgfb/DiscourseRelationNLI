@@ -259,7 +259,7 @@ class BertMLP(nn.Module):
                 optimizer.zero_grad()
 
                 # calcul (du log) des probabilités de chaque classe, pour les exemples du batch
-                log_probs = self.forward(tokens.to(device))
+                log_probs = self.forward(tokens.to(device)).to(device)
 
                 # calcul de la loss
                 loss = self.loss(log_probs, gold_classes)
