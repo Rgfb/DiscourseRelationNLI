@@ -314,7 +314,7 @@ class BertMLP(nn.Module):
     def evaluation(self, data_set):
 
         y_true = torch.tensor(y[data_set])
-        y_pred = self.predict(tokenized[data_set])
+        y_pred = self.predict(Arg1[data_set], Arg2[data_set])
 
         torch.save(torch.tensor(confusion_matrix(y_true, y_pred)), data_set+'_confmat.pt')
         print(confusion_matrix(y_true, y_pred))
