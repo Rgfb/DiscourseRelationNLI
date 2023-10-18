@@ -306,7 +306,7 @@ class BertMLP(nn.Module):
                 batch_tokens = {'input_ids': tokens['input_ids'][i:i+self.size_of_batch],
                                 'token_type_ids': tokens['token_type_ids'][i:i+self.size_of_batch],
                                 'attention_mask': tokens['attention_mask'][i:i+self.size_of_batch]}
-                log_probs = self.forward(batch_tokens.to(device))
+                log_probs = self.forward(batch_tokens)
                 i += self.size_of_batch
                 predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
         return predictions
