@@ -297,15 +297,15 @@ class BertMLP(nn.Module):
 
         return dev_losses, train_losses
       
-    def predict(self, tokens):
+    def predict(self, sentences1, sentences2):
         self.eval()
         i = 0
         predictions = torch.tensor([])
         with torch.no_grad():
-            while i < len(tokens['input_ids']):
-                batch_tokens = {'input_ids': tokens['input_ids'][i:i+self.size_of_batch],
-                                'token_type_ids': tokens['token_type_ids'][i:i+self.size_of_batch],
-                                'attention_mask': tokens['attention_mask'][i:i+self.size_of_batch]}
+            while i < len(sentences1):
+                arg1, arg2 = sentences1[i: i+self.size_of_batch], sentences2[i: i+self.size_of_batch]
+                batch_tokens = tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
+                                         return_tensors="pt", padding='max_length')
                 log_probs = self.forward(batch_tokens)
                 i += self.size_of_batch
                 predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
@@ -354,7 +354,7 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
 
 
 # In[64]:
-predict_train = discourse_relation_mlp.predict(tokenized['train'])
+predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
 print(predict_train)
 print(i2gold_class)
 
