@@ -383,7 +383,7 @@ def plot_loss():
     return loss_fig
 
 
-loss_fig = plot_loss
+loss_fig = plot_loss()
 loss_fig.savefig('BertFineTunedModel.png')
 
 
