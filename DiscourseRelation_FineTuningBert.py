@@ -80,14 +80,12 @@ Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
 
 Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
 X, y = defaultdict(lambda: []), defaultdict(lambda: [])
-shuffle(pdtb2)
-for example in pdtb2[:300]:
+# shuffle(pdtb2)
+for example in pdtb2:
     if example['Relation'] == 'Implicit':
         Arg1[cb_split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
         Arg2[cb_split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
         y[cb_split_sec2set[int(example['Section'])]].append(example['ConnHeadSemClass1'].split('.')[0])
-
-#print(Arg1['train'][0], Arg2['train'][0], y['train'][0])
 
 
 # In[32]:
@@ -350,7 +348,7 @@ l2_reg = 0.0001
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=10, down_sampling=False)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=1000, down_sampling=False)
 
 
 # In[64]:
