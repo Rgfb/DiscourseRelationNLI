@@ -40,6 +40,9 @@ import pickle
 
 # In[2]:
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(device)
+
 MAX_LENGTH = 128
 
 pdtb2 = []
@@ -80,7 +83,7 @@ Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
 Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
 X, y = defaultdict(lambda: []), defaultdict(lambda: [])
 #shuffle(pdtb2)
-for example in pdtb2:
+for example in pdtb2[:300]:
     if example['Relation'] == 'Implicit':
         Arg1[cb_split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
         Arg2[cb_split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
@@ -99,7 +102,6 @@ les colonnes qui nous intéressent :
 """
 
 snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_test.txt", sep="\t")
-
 
 snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
 
@@ -176,11 +178,10 @@ un MLP qui prend en entrée une phrase tokenisée et renvoie la liste des probas
 """
 
 
-
 class BertMLP(nn.Module):
 
     def __init__(self, first_hidden_layer_size, size_of_batch, dropout, size_of_input=768,
-                 num_tokens=MAX_LENGTH, num_classes=len(i2gold_class), reg=5, loss=nn.NLLLoss()):
+                 num_tokens=MAX_LENGTH, num_classes=len(i2gold_class), reg=5, loss=nn.NLLLoss().to(device)):
           
         super(BertMLP, self).__init__()
 
@@ -191,23 +192,23 @@ class BertMLP(nn.Module):
         self.num_tokens = num_tokens
         self.size_of_batch = size_of_batch
 
-        self.w1 = nn.Linear(size_of_input, first_hidden_layer_size)
+        self.w1 = nn.Linear(size_of_input, first_hidden_layer_size).to(device)
         # self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
-        self.w3 = nn.Linear(first_hidden_layer_size, num_classes)
+        self.w3 = nn.Linear(first_hidden_layer_size, num_classes).to(device)
 
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(dropout).to(device)
 
     def forward(self, tokens):
 
-        vect_sentences = bert_model(**tokens)[0][:, 0, :]
+        vect_sentences = bert_model(**tokens)[0][:, 0, :].to(device)
         
-        linear_comb = self.w1(vect_sentences)
-        drop = self.dropout(linear_comb)
-        out = torch.relu(drop)
+        linear_comb = self.w1(vect_sentences).to(device)
+        drop = self.dropout(linear_comb).to(device)
+        out = torch.relu(drop).to(device)
 
-        linear_comb = self.w3(out)
-        drop = self.dropout(linear_comb)
-        log_prob = F.log_softmax(drop, dim=1)
+        linear_comb = self.w3(out).to(device)
+        drop = self.dropout(linear_comb).to(device)
+        log_prob = F.log_softmax(drop, dim=1).to(device)
 
         return log_prob
 
@@ -217,7 +218,7 @@ class BertMLP(nn.Module):
     # down_sampling : booleen pour savoir si on fait du down sampling
     # size_of_samples : taille des samples lorsqu'on fait du down sampling
 
-    def training_step(self, optimizer, nb_epoch=50000, patience=2, reg=1, down_sampling=True, size_of_samples=800):
+    def training_step(self, optimizer, nb_epoch=2, patience=2, reg=1, down_sampling=True, size_of_samples=800):
         # les listes qui contiendront les valeurs de la loss sur le dev et le train pour chaque époque
         dev_losses = []
         train_losses = []
@@ -267,7 +268,7 @@ class BertMLP(nn.Module):
                 optimizer.zero_grad()
 
                 # calcul (du log) des probabilités de chaque classe, pour les exemples du batch
-                log_probs = self.forward(tokens)
+                log_probs = self.forward(tokens.to(device))
 
                 # calcul de la loss
                 loss = self.loss(log_probs, gold_classes)
@@ -314,7 +315,7 @@ class BertMLP(nn.Module):
                 batch_tokens = {'input_ids': tokens['input_ids'][i:i+self.size_of_batch],
                                 'token_type_ids': tokens['token_type_ids'][i:i+self.size_of_batch],
                                 'attention_mask': tokens['attention_mask'][i:i+self.size_of_batch]}
-                log_probs = self.forward(batch_tokens)
+                log_probs = self.forward(batch_tokens.to(device))
                 i += self.size_of_batch
                 predictions = torch.cat((predictions, torch.argmax(log_probs, dim=1)))
         return predictions
@@ -349,6 +350,7 @@ for arg1, arg2, label in zip(Arg1['train'], Arg2['train'], y['train']):
 # In[63]:
 # création du classifieur
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, size_of_batch=100, dropout=0.3, loss=nn.NLLLoss())
+discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # quelques hyperparametres
 learning_rate = 0.0001
@@ -377,6 +379,8 @@ discourse_relation_mlp.evaluation("test")
 
 # In[29]:
 # courbe d'evolution de la loss
+
+
 def plot_loss():
     abs = list(range(0, len(dev_losses)*discourse_relation_mlp.reg, discourse_relation_mlp.reg))
     loss_fig = plt.figure("Figure 1")
@@ -386,6 +390,7 @@ def plot_loss():
     plt.xlabel('nombre d\'époques')
     plt.legend()
     return loss_fig
+
 
 loss_fig = plot_loss
 loss_fig.savefig('BertFineTunedModel.png')
