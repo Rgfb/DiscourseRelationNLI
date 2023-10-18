@@ -43,7 +43,7 @@ import pickle
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(device)
 
-MAX_LENGTH = 256
+MAX_LENGTH = 128
 
 pdtb2 = []
 reader = csv.DictReader(open('pdtb2.csv', 'r'))
