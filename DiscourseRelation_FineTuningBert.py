@@ -279,12 +279,12 @@ class BertMLP(nn.Module):
 
                     # evaluation sur le dev
                     log_probs_dev = self.forward(tokenized['dev'])
-                    loss_on_dev = self.loss(log_probs_dev, torch.LongTensor(y['dev'])).detach().numpy()
+                    loss_on_dev = self.loss(log_probs_dev, torch.LongTensor(y['dev']).to(device)).detach().numpy()
                     dev_losses.append(loss_on_dev)
 
                     # evaluation sur le train
                     log_probs_train = self.forward(tokenized['train'])
-                    loss_on_train = self.loss(log_probs_train, torch.LongTensor(y['train'])).detach().numpy()
+                    loss_on_train = self.loss(log_probs_train, torch.LongTensor(y['train']).to(device)).detach().numpy()
                     train_losses.append(loss_on_train)
 
                 # early stopping
