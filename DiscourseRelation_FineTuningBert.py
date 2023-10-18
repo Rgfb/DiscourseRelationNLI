@@ -68,7 +68,7 @@ print(cb_split_sec2set)
 
 # In[4]:
 model_name = "bert-base-uncased"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name).to(device)
 bert_model = AutoModel.from_pretrained(model_name).to(device)
 
 
