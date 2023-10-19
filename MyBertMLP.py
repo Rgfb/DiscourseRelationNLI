@@ -1,6 +1,4 @@
-"""
---------------------- Installations et Imports -------------------------
-"""
+# --------------------- Installations et Imports -------------------------
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, accuracy_score
 
 import torch
@@ -10,7 +8,6 @@ import torch.optim as optim
 from random import shuffle
 from collections import Counter, defaultdict
 from transformers import AutoModel, AutoTokenizer
-
 
 # ----------------------- Le Modèle ---------------------------------
 

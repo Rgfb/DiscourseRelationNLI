@@ -11,18 +11,6 @@ faire une methode pour les heatmap
 Commenter un peu la fin ...
 """
 # --------------------- Installations et Imports -------------------------
-from random import shuffle
-import sys
-from sklearn.metrics import confusion_matrix, f1_score, precision_score, accuracy_score
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from random import shuffle
-from collections import Counter, defaultdict
-from transformers import AutoModel, AutoTokenizer
-
 import csv
 from collections import Counter, defaultdict
 from MyBertMLP import BertMLP
@@ -86,7 +74,6 @@ les colonnes qui nous intéressent :
 """
 
 snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_test.txt", sep="\t")
-
 snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
 
 y_nli = []
@@ -114,7 +101,6 @@ print("dev :", Counter(y['dev']))
 print("test :", Counter(y['test']))
 """
 
-
 # création d'une correspondance (goldclass <-> entier) à l'aide :
 # - d'une liste i2gold_class qui a un entier associe une class
 # - d'un dictionnaire gold_class2i qui a une classe associe un entier
@@ -132,8 +118,8 @@ for s in ['test', 'train', 'dev']:
 
 # --------------------- création du classifieur -----------------------
 
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=100, second_hidden_layer_size=25, size_of_batch=100,
-                                 dropout=0.3, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
+                                 dropout=0.5, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
                                  Arg1train=Arg1['train'], Arg2train=Arg2['train'], ytrain=y['train'],
                                  Arg1dev=Arg1['dev'], Arg2dev=Arg2['dev'], ydev=y['dev'],
                                  i2goldclasses=i2gold_class)
@@ -199,9 +185,6 @@ repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
                            for nli_class, disc_rel in zip(y_nli, predict_revNLI.tolist())])
 # print(repartition)
 
-
-# In[40]:
-# print(Counter(y_nli))
 
 # In[54]:
 i2nli = ['contradiction', 'entailment', 'neutral']
