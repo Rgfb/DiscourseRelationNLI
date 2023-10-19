@@ -411,11 +411,15 @@ torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 
 # In[42]:
 predict_NLI = discourse_relation_mlp.predict(Arg1['snli test'], Arg2['snli test'])
+predict_revNLI = discourse_relation_mlp.predict(Arg2['snli test'], Arg1['snli test'])
 # print(predict_NLI[:10])
 
 
 # In[43]:
-repartition = Counter([(nli_class, i2gold_class[int(disc_rel)]) for nli_class, disc_rel in zip(y_nli, predict_NLI.tolist())])
+repartition = Counter([(nli_class, i2gold_class[int(disc_rel)])
+                       for nli_class, disc_rel in zip(y_nli, predict_NLI.tolist())])
+repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
+                           for nli_class, disc_rel in zip(y_nli, predict_revNLI.tolist())])
 # print(repartition)
 
 
@@ -426,25 +430,37 @@ repartition = Counter([(nli_class, i2gold_class[int(disc_rel)]) for nli_class, d
 i2nli = ['contradiction', 'entailment', 'neutral']
 
 
-def plot_mat(matrix, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral']):
+def save_plot(matrix, filename, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral']):
     plt.figure()
     df_cm = DataFrame(matrix, index=index, columns=columns)
     ax = sn.heatmap(df_cm, cmap='Blues')
     heatmap = ax.get_figure()
-    return heatmap
+    heatmap.savefig(filename, dpi=400)
 
 
 mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
 print(mat)
-figure = plot_mat(mat.T)
-figure.savefig('AvantNormalisation.png', dpi=400)
+save_plot(mat.T, 'AvantNormalisation.png')
+
 
 mat1 = mat.T/torch.sum(mat, axis=1)
 print(mat1)
-figure = plot_mat(mat1)
-figure.savefig('ApresNormalisationSNLI.png', dpi=400)
+save_plot(mat1, 'ApresNormalisationSNLI.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
 print(mat2.T)
-figure = plot_mat(mat2.T)
-figure.savefig('ApresNormalisationPDTB.png', dpi=400)
+save_plot(mat1, 'ApresNormalisationPDTB.png')
+
+
+mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
+print(mat)
+save_plot(mat.T, 'AvantNormalisation.png')
+
+
+mat1 = mat.T/torch.sum(mat, axis=1)
+print(mat1)
+save_plot(mat1, 'ApresNormalisationSNLI.png')
+
+mat2 = mat/torch.sum(mat, axis=0)
+print(mat2.T)
+save_plot(mat1, 'ApresNormalisationPDTB.png')
