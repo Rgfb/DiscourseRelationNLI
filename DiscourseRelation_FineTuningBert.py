@@ -114,8 +114,7 @@ class BertMLP(nn.Module):
                 arg2_sample = []
                 y_sample = []
 
-                for gold_class in self.i2goldclasses:
-
+                for gold_class in range(len(self.i2goldclasses)):
                     # shuffle pour ne pas prendre les mêmes exemples à chaque fois
                     shuffle(examples[gold_class])
 
@@ -333,8 +332,8 @@ for s in ['test', 'train', 'dev']:
     y[s] = [gold_class2i[gold_class] for gold_class in y[s]]
 
 
-
 # In[63]:
+print(Arg1['train'][0])
 # création du classifieur
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
                                  dropout=0.3, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
