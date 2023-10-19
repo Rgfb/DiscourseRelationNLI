@@ -42,7 +42,7 @@ print(device)
 MAX_LENGTH = 128
 
 pdtb2 = []
-reader = csv.DictReader(open('pdtb2.csv', 'r'))
+reader = csv.DictReader(open('datas/pdtb2.csv/pdtb2.csv', 'r'))
 for example in reader:
     pdtb2.append(example)
 
