@@ -140,8 +140,8 @@ discourse_relation_mlp = BertMLP(first_hidden_layer_size=100, second_hidden_laye
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # quelques hyperparametres
-learning_rate = 0.00003
-l2_reg = 0.0001
+learning_rate = 0.00001
+l2_reg = 0.00002
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
