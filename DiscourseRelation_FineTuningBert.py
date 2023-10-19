@@ -354,7 +354,7 @@ for arg1, arg2, label in zip(Arg1['train'], Arg2['train'], y['train']):
 
 # In[63]:
 # création du classifieur
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=200, second_hidden_layer_size=100, size_of_batch=100,
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=200, second_hidden_layer_size=100, size_of_batch=50,
                                  dropout=0.3, loss=nn.NLLLoss())
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
