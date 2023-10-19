@@ -168,7 +168,7 @@ un MLP qui prend en entrée une phrase tokenisée et renvoie la liste des probas
 
 class BertMLP(nn.Module):
 
-    def __init__(self, first_hidden_layer_size, size_of_batch, dropout, size_of_input=768,
+    def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, size_of_input=768,
                  num_tokens=MAX_LENGTH, num_classes=len(i2gold_class), reg=5, loss=nn.NLLLoss().to(device)):
           
         super(BertMLP, self).__init__()
@@ -181,8 +181,8 @@ class BertMLP(nn.Module):
         self.size_of_batch = size_of_batch
 
         self.w1 = nn.Linear(size_of_input, first_hidden_layer_size).to(device)
-        # self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
-        self.w3 = nn.Linear(first_hidden_layer_size, num_classes).to(device)
+        self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
+        self.w3 = nn.Linear(second_hidden_layer_size, num_classes).to(device)
 
         self.dropout = nn.Dropout(dropout).to(device)
 
@@ -191,6 +191,10 @@ class BertMLP(nn.Module):
         vect_sentences = bert_model(**tokens.to(device))[0][:, 0, :].to(device)
         
         linear_comb = self.w1(vect_sentences).to(device)
+        drop = self.dropout(linear_comb).to(device)
+        out = torch.relu(drop).to(device)
+
+        linear_comb = self.w2(out).to(device)
         drop = self.dropout(linear_comb).to(device)
         out = torch.relu(drop).to(device)
 
@@ -350,7 +354,7 @@ for arg1, arg2, label in zip(Arg1['train'], Arg2['train'], y['train']):
 
 # In[63]:
 # création du classifieur
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=100, size_of_batch=100, dropout=0.3, loss=nn.NLLLoss())
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=400, second_hidden_layer_size=200, size_of_batch=100, dropout=0.3, loss=nn.NLLLoss())
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # quelques hyperparametres
