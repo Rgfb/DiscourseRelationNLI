@@ -299,8 +299,7 @@ class BertMLP(nn.Module):
 
     def computing_loss(self, data_set):
         self.eval()
-        i = 0
-        loss = 0
+        i, loss, nb_batch = 0, 0, 0
         with torch.no_grad():
             while i < len(Arg1[data_set]):
                 arg1, arg2 = Arg1[data_set][i: i+self.size_of_batch], Arg2[data_set][i: i+self.size_of_batch]
@@ -309,7 +308,8 @@ class BertMLP(nn.Module):
                 log_probs = self.forward(batch_tokens.to(device))
                 loss += self.loss(log_probs, torch.LongTensor(y[data_set][i: i+self.size_of_batch]).to(device)).cpu().detach().numpy()
                 i += self.size_of_batch
-        return loss
+                nb_batch += 1
+        return loss/nb_batch
 
     def predict(self, sentences1, sentences2):
         self.eval()
@@ -346,21 +346,20 @@ class BertMLP(nn.Module):
 # In[21]:
 
 
-examples = defaultdict(lambda:[])
-
+examples = defaultdict(lambda: [])
 for arg1, arg2, label in zip(Arg1['train'], Arg2['train'], y['train']):
     examples[label].append((arg1, arg2))
 
 
 # In[63]:
 # création du classifieur
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=200, second_hidden_layer_size=100, size_of_batch=50,
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
                                  dropout=0.3, loss=nn.NLLLoss())
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # quelques hyperparametres
-learning_rate = 0.0001
-l2_reg = 0.0001
+learning_rate = 0.00003
+l2_reg = 0.00005
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
