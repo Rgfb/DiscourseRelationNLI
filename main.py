@@ -62,9 +62,17 @@ Arg1, Arg2, y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(la
 # shuffle(pdtb2)
 for example in pdtb2:
     if example['Relation'] == 'Implicit':
+        if 'Chosen alternative' in example['ConnHeadSemClass1'].split('.'):
+            gold_class = 'Expansion.Chosen alternative'
+        elif 'Equivalence' in example['ConnHeadSemClass1'].split('.') or 'Generalization' in example['ConnHeadSemClass1'].split('.'):
+            gold_class = 'Expansion.EquivalenceORGeneralization'
+        elif 'Specification' in example['ConnHeadSemClass1'].split('.'):
+            gold_class = 'Expansion.EquivalenceORGeneralization'
+        else:
+            gold_class = example['ConnHeadSemClass1'].split('.')[0]
         Arg1[split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
         Arg2[split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
-        y[split_sec2set[int(example['Section'])]].append(example['ConnHeadSemClass1'].split('.')[0])
+        y[split_sec2set[int(example['Section'])]].append(gold_class)
 
 
 # -------------------- ouverture du csv associé au test du SNLI ------------------------------
@@ -97,11 +105,11 @@ print(len(Arg1['test']), len(Arg2['test']), len(y['test']))
 """
 
 # distribution des labels
-"""
+
 print("train :", Counter(y['train']))
 print("dev :", Counter(y['dev']))
 print("test :", Counter(y['test']))
-"""
+
 
 # création d'une correspondance (goldclass <-> entier) à l'aide :
 # - d'une liste i2gold_class qui a un entier associe une class
@@ -139,7 +147,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
                                                                 down_sampling=True,
-                                                                size_of_samples=3000)
+                                                                size_of_samples=2000)
 
 
 predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
