@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
+import os
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -122,7 +123,7 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # quelques hyperparametres
 learning_rate = 0.00001
-l2_reg = 0.0002
+l2_reg = 0.001
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
@@ -159,7 +160,7 @@ def plot_loss():
 
 
 loss_fig = plot_loss()
-loss_fig.savefig('Images/BertFineTunedModel.png')
+loss_fig.savefig(os.path.join(".", "Images", 'BertFineTunedModel.png'))
 
 
 # sauvegarde d'un modele
@@ -194,20 +195,20 @@ def save_plot(matrix, filename, index=i2gold_class, columns=['contradiction', 'e
 
 
 mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
-save_plot(mat.T, 'Images/AvantNormalisation.png')
+save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation.png'))
 
 mat1 = mat.T/torch.sum(mat, axis=1)
-save_plot(mat1, 'Images/ApresNormalisationSNLI.png')
+save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI.png'))
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat2.T, 'Images/ApresNormalisationPDTB.png')
+save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB.png'))
 
 
 mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
-save_plot(mat.T, 'Images/AvantNormalisation_rev.png')
+save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_rev.png'))
 
 mat1 = mat.T/torch.sum(mat, axis=1)
-save_plot(mat1, 'Images/ApresNormalisationSNLI_rev.png')
+save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_rev.png'))
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat2.T, 'Images/ApresNormalisationPDTB_rev.png')
+save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'))
