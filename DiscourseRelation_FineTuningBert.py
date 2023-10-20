@@ -207,7 +207,7 @@ mat1 = mat.T/torch.sum(mat, axis=1)
 save_plot(mat1, 'ApresNormalisationSNLI.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat2, 'ApresNormalisationPDTB.png')
+save_plot(mat2.T, 'ApresNormalisationPDTB.png')
 
 
 mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
@@ -217,4 +217,4 @@ mat1 = mat.T/torch.sum(mat, axis=1)
 save_plot(mat1, 'ApresNormalisationSNLI_rev.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat2, 'ApresNormalisationPDTB_rev.png')
+save_plot(mat2.T, 'ApresNormalisationPDTB_rev.png')
