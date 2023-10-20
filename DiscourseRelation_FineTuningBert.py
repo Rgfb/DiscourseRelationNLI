@@ -131,7 +131,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
                          weight_decay=l2_reg)
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1,
+                                                                nb_epoch=1000,
                                                                 down_sampling=False)
 
 
