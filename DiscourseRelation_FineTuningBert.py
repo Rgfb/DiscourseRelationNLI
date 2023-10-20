@@ -37,28 +37,34 @@ for example in reader:
     pdtb2.append(example)
 
 
-# -------------------- Split ------------------------------
+# -------------------- Les Partitionnements du PDTB ------------------------------
+split = 'CB'
+if split == 'CB':
+    split_set2sec = {"dev": [0, 1, 23, 24], "test": [21, 22], "train": list(range(2, 21))}
+if split == 'Lin':
+    split_set2sec = {"dev": [22], "test": [23], "train": list(range(2, 22))}
+if split == 'Ji':
+    split_set2sec = {"dev": [0, 1], "test": [21, 22], "train": list(range(2, 21))}
 
-cb_split_set2sec = {"dev": [0, 1, 23, 24], "test": [21, 22], "train": list(range(2, 21))}
-cb_split_sec2set = {}
-for key, value in cb_split_set2sec.items():
+split_sec2set = {}
+for key, value in split_set2sec.items():
     for section in value:
-        cb_split_sec2set[section] = key
+        split_sec2set[section] = key
 
 
 """
 Chargement du fichier pdtb2
-Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
+Arg1 contient les 1eres phrases, Arg2 les deuxiemes, 
+y les goldclass (ie les relations de discours qui nous interessent)
 """
 
-Arg1, Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
-X, y = defaultdict(lambda: []), defaultdict(lambda: [])
+Arg1, Arg2, y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(lambda: [])
 # shuffle(pdtb2)
 for example in pdtb2:
     if example['Relation'] == 'Implicit':
-        Arg1[cb_split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
-        Arg2[cb_split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
-        y[cb_split_sec2set[int(example['Section'])]].append(example['ConnHeadSemClass1'].split('.')[0])
+        Arg1[split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
+        Arg2[split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
+        y[split_sec2set[int(example['Section'])]].append(example['ConnHeadSemClass1'].split('.')[0])
 
 
 # -------------------- ouverture du csv associé au test du SNLI ------------------------------
@@ -132,7 +138,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
-                                                                down_sampling=False)
+                                                                down_sampling=True)
 
 
 predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])

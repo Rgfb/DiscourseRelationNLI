@@ -63,13 +63,16 @@ class BertMLP(nn.Module):
 
         return log_prob
 
-    # l'entrainement du MLP
+    """ 
+    l'entrainement du MLP
 
-    # reg : regularite du calcul de la loss (on calcule la loss toutes les reg epoques)
-    # down_sampling : booleen pour savoir si on fait du down sampling
-    # size_of_samples : taille des samples lorsqu'on fait du down sampling
+    reg : regularite du calcul de la loss (on calcule la loss toutes les reg epoques)
+    down_sampling : booleen pour savoir si on fait du down sampling
+    size_of_samples : taille des samples lorsqu'on fait du down sampling
+    """
 
-    def training_step(self, optimizer, nb_epoch=2, patience=2, reg=1, down_sampling=True, size_of_samples=1000):
+    def training_step(self, optimizer, nb_epoch=2, patience=2, reg=1,
+                      down_sampling=True, size_of_samples=2000):
         # les listes qui contiendront les valeurs de la loss sur le dev et le train pour chaque époque
         dev_losses = []
         train_losses = []
@@ -111,7 +114,7 @@ class BertMLP(nn.Module):
             # un indice i pour parcourir tout le sample
             i = 0
             while i < len(y_sample):
-                # input_vectors : les vecteurs contenant les ids et les masks pour chaque exemple
+                # arg1 (resp arg2) : les tokens des premieres (resp deuxiemes) phrases tokenisees
                 # gold_classes : les goldclass associées
                 arg1, arg2 = arg1_sample[i: i+self.size_of_batch], arg2_sample[i: i+self.size_of_batch]
                 gold_classes = torch.LongTensor(y_sample[i: i+self.size_of_batch]).to(self.device)
@@ -133,7 +136,7 @@ class BertMLP(nn.Module):
                 loss.backward()
                 optimizer.step()
 
-            # print régulier de la loss sur le train et le dev
+            # calcul et print régulier de la loss sur le train et le dev
             if epoch % reg == 0:
                 # mode "eval", pas de dropout ici
                 self.eval()
