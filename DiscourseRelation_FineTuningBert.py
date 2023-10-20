@@ -134,7 +134,9 @@ l2_reg = 0.0002
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=1, down_sampling=False)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
+                                                                nb_epoch=1000,
+                                                                down_sampling=False)
 
 
 # In[64]:
