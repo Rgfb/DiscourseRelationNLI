@@ -199,28 +199,20 @@ def save_plot(matrix, filename, index=i2gold_class, columns=['contradiction', 'e
 
 
 mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
-print(mat)
 save_plot(mat.T, 'AvantNormalisation.png')
 
-
 mat1 = mat.T/torch.sum(mat, axis=1)
-print(mat1)
 save_plot(mat1, 'ApresNormalisationSNLI.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
-print(mat2.T)
 save_plot(mat1, 'ApresNormalisationPDTB.png')
 
 
 mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
-print(mat)
 save_plot(mat.T, 'AvantNormalisation_rev.png')
 
-
 mat1 = mat.T/torch.sum(mat, axis=1)
-print(mat1)
 save_plot(mat1, 'ApresNormalisationSNLI_rev.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
-print(mat2.T)
 save_plot(mat1, 'ApresNormalisationPDTB_rev.png')
