@@ -67,7 +67,7 @@ for example in pdtb2:
         elif 'Equivalence' in example['ConnHeadSemClass1'].split('.') or 'Generalization' in example['ConnHeadSemClass1'].split('.'):
             gold_class = 'Expansion.EquivalenceORGeneralization'
         elif 'Specification' in example['ConnHeadSemClass1'].split('.'):
-            gold_class = 'Expansion.EquivalenceORGeneralization'
+            gold_class = 'Expansion.Specification'
         else:
             gold_class = example['ConnHeadSemClass1'].split('.')[0]
         Arg1[split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
