@@ -1,6 +1,8 @@
 """
 A FAIRE
 
+UN ARGPARSE
+
 Une classe pour le traitement des données (PDTB (qui pourra notamment gérer les differents splits..) et SNLI)
 factoriser tout ce qui peut l'etre
 
@@ -132,7 +134,7 @@ l2_reg = 0.0002
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
 
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=1000, down_sampling=False)
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=1, down_sampling=False)
 
 
 # In[64]:
@@ -145,7 +147,7 @@ discourse_relation_mlp.evaluation("train", Arg1["train"], Arg2["train"], y["trai
 discourse_relation_mlp.evaluation("dev", Arg1["dev"], Arg2["dev"], y["dev"])
 discourse_relation_mlp.evaluation("test", Arg1["test"], Arg2["test"], y["test"])
 
-# In[29]:
+
 # courbe d'evolution de la loss
 
 
@@ -205,7 +207,7 @@ mat1 = mat.T/torch.sum(mat, axis=1)
 save_plot(mat1, 'ApresNormalisationSNLI.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat1, 'ApresNormalisationPDTB.png')
+save_plot(mat2, 'ApresNormalisationPDTB.png')
 
 
 mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
@@ -215,4 +217,4 @@ mat1 = mat.T/torch.sum(mat, axis=1)
 save_plot(mat1, 'ApresNormalisationSNLI_rev.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat1, 'ApresNormalisationPDTB_rev.png')
+save_plot(mat2, 'ApresNormalisationPDTB_rev.png')
