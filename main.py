@@ -62,12 +62,12 @@ Arg1, Arg2, y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(la
 # shuffle(pdtb2)
 for example in pdtb2:
     if example['Relation'] == 'Implicit':
-        if 'Chosen alternative' in example['ConnHeadSemClass1'].split('.'):
-            gold_class = 'Expansion.Chosen alternative'
-        elif 'Equivalence' in example['ConnHeadSemClass1'].split('.') or 'Generalization' in example['ConnHeadSemClass1'].split('.'):
-            gold_class = 'Expansion.EquivalenceORGeneralization'
-        elif 'Specification' in example['ConnHeadSemClass1'].split('.'):
-            gold_class = 'Expansion.Specification'
+        if 'Specification' in example['ConnHeadSemClass1'].split('.'):
+            gold_class = 'Specification'
+        elif 'Reason' in example['ConnHeadSemClass1'].split('.'):
+            gold_class = 'Reason'
+        elif 'Result' in example['ConnHeadSemClass1'].split('.'):
+            gold_class = 'Result'
         else:
             gold_class = example['ConnHeadSemClass1'].split('.')[0]
         Arg1[split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
@@ -82,7 +82,7 @@ les colonnes qui nous intéressent :
     la goldclass
 """
 
-snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_test.txt", sep="\t")
+snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_dev.txt", sep="\t")
 snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
 
 y_nli = []
@@ -91,8 +91,8 @@ for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], s
         if isinstance(sent2, float):
             print(sent1, '\n', sent2, '\n', gold, '\n')
         else:
-            Arg1['snli test'].append(sent1)
-            Arg2['snli test'].append(sent2)
+            Arg1['snli dev'].append(sent1)
+            Arg2['snli dev'].append(sent2)
             y_nli.append(gold)
 
 
@@ -146,7 +146,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
-                                                                down_sampling=True,
+                                                                down_sampling=False,
                                                                 size_of_samples=2000)
 
 
@@ -186,8 +186,8 @@ torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 
 
 # --------------- prediction des relations de discours sur le SNLI -----------------
-predict_NLI = discourse_relation_mlp.predict(Arg1['snli test'], Arg2['snli test'])
-predict_revNLI = discourse_relation_mlp.predict(Arg2['snli test'], Arg1['snli test'])
+predict_NLI = discourse_relation_mlp.predict(Arg1['snli dev'], Arg2['snli dev'])
+predict_revNLI = discourse_relation_mlp.predict(Arg2['snli dev'], Arg1['snli dev'])
 
 
 # ------------- La repartition des relations de discours predites sur le SNLI --------------------
