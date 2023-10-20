@@ -22,7 +22,7 @@ class BertMLP(nn.Module):
 
     def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, device, num_classes,
                  Arg1train, Arg2train, ytrain, Arg1dev, Arg2dev, ydev, i2goldclasses,
-                 size_of_input=768, num_tokens=128, reg=5, loss=nn.NLLLoss(),
+                 size_of_input=768, num_tokens=128, reg=1, loss=nn.NLLLoss(),
                  model_name="bert-base-uncased"):
 
         super(BertMLP, self).__init__()

@@ -138,7 +138,8 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
-                                                                down_sampling=True)
+                                                                down_sampling=False,
+                                                                size_of_samples=3000)
 
 
 predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
@@ -195,7 +196,7 @@ i2nli = ['contradiction', 'entailment', 'neutral']
 def save_plot(matrix, filename, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral']):
     plt.figure()
     df_cm = DataFrame(matrix, index=index, columns=columns)
-    ax = sn.heatmap(df_cm, cmap='Blues')
+    ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".1f")
     heatmap = ax.get_figure()
     heatmap.savefig(filename, dpi=400)
 
