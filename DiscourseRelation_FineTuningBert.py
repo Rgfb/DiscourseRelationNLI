@@ -25,7 +25,6 @@ import torch
 import torch.nn as nn
 
 
-# In[2]:
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(device)
 
@@ -45,12 +44,7 @@ for key, value in cb_split_set2sec.items():
     for section in value:
         cb_split_sec2set[section] = key
 
-"""
-print(cb_split_set2sec)
-print(cb_split_sec2set)
-"""
 
-# In[31]:
 """
 Chargement du fichier pdtb2
 Arg1 contient les 1eres phrases, Arg2 les deuxiemes, y les goldclass
@@ -65,8 +59,6 @@ for example in pdtb2:
         Arg2[cb_split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
         y[cb_split_sec2set[int(example['Section'])]].append(example['ConnHeadSemClass1'].split('.')[0])
 
-
-# In[32]:
 
 # -------------------- ouverture du csv associé au test du SNLI ------------------------------
 """
@@ -90,6 +82,7 @@ for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], s
 
 
 # nombre d'exemples par set
+# (On compare egalement qu'il y a bien autant de Arg1 que de Arg2)
 """
 print(len(Arg1['train']), len(Arg2['train']), len(y['train']))
 print(len(Arg1['dev']), len(Arg2['dev']), len(y['dev']))
@@ -132,19 +125,19 @@ learning_rate = 0.00001
 l2_reg = 0.0002
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
-optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=learning_rate, weight_decay=l2_reg)
+optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
+                         lr=learning_rate,
+                         weight_decay=l2_reg)
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1000,
+                                                                nb_epoch=1,
                                                                 down_sampling=False)
 
 
-# In[64]:
 predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
 print(i2gold_class)
 
 
-# In[65]:
 discourse_relation_mlp.evaluation("train", Arg1["train"], Arg2["train"], y["train"])
 discourse_relation_mlp.evaluation("dev", Arg1["dev"], Arg2["dev"], y["dev"])
 discourse_relation_mlp.evaluation("test", Arg1["test"], Arg2["test"], y["test"])
@@ -166,31 +159,29 @@ def plot_loss():
 
 
 loss_fig = plot_loss()
-loss_fig.savefig('BertFineTunedModel.png')
+loss_fig.savefig('Images/BertFineTunedModel.png')
 
 
-# In[ ]:
 # sauvegarde d'un modele
 torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 
 # chargement d'un modele
 # discourse_relation_mlp = torch.load('fourth_model.pth')
 
-# In[42]:
+
+# --------------- prediction des relations de discours sur le SNLI -----------------
 predict_NLI = discourse_relation_mlp.predict(Arg1['snli test'], Arg2['snli test'])
 predict_revNLI = discourse_relation_mlp.predict(Arg2['snli test'], Arg1['snli test'])
-# print(predict_NLI[:10])
 
 
-# In[43]:
+# ------------- La repartition des relations de discours predites sur le SNLI --------------------
+
 repartition = Counter([(nli_class, i2gold_class[int(disc_rel)])
                        for nli_class, disc_rel in zip(y_nli, predict_NLI.tolist())])
 repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
                            for nli_class, disc_rel in zip(y_nli, predict_revNLI.tolist())])
 # print(repartition)
 
-
-# In[54]:
 i2nli = ['contradiction', 'entailment', 'neutral']
 
 
@@ -203,20 +194,20 @@ def save_plot(matrix, filename, index=i2gold_class, columns=['contradiction', 'e
 
 
 mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
-save_plot(mat.T, 'AvantNormalisation.png')
+save_plot(mat.T, 'Images/AvantNormalisation.png')
 
 mat1 = mat.T/torch.sum(mat, axis=1)
-save_plot(mat1, 'ApresNormalisationSNLI.png')
+save_plot(mat1, 'Images/ApresNormalisationSNLI.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat2.T, 'ApresNormalisationPDTB.png')
+save_plot(mat2.T, 'Images/ApresNormalisationPDTB.png')
 
 
 mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
-save_plot(mat.T, 'AvantNormalisation_rev.png')
+save_plot(mat.T, 'Images/AvantNormalisation_rev.png')
 
 mat1 = mat.T/torch.sum(mat, axis=1)
-save_plot(mat1, 'ApresNormalisationSNLI_rev.png')
+save_plot(mat1, 'Images/ApresNormalisationSNLI_rev.png')
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat2.T, 'ApresNormalisationPDTB_rev.png')
+save_plot(mat2.T, 'Images/ApresNormalisationPDTB_rev.png')
