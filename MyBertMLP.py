@@ -190,20 +190,13 @@ class BertMLP(nn.Module):
         return predictions
 
     def evaluation(self, data_set, arg1, arg2, y):
-        print(data_set+' :')
 
         y_true = torch.tensor(y).cpu()
         y_pred = self.predict(arg1, arg2).cpu()
 
-        torch.save(torch.tensor(confusion_matrix(y_true, y_pred)), data_set+'_confmat.pt')
+        print(data_set+' :')
         print(confusion_matrix(y_true, y_pred))
-
-        torch.save(torch.tensor(f1_score(y_true, y_pred, average='macro')), data_set+'_f1macro.pt')
         print("f1 macro : ", f1_score(y_true, y_pred, average='macro'))
-
-        torch.save(torch.tensor(precision_score(y_true, y_pred, average='macro')), data_set+'_precisionmacro.pt')
         print("precision macro : ", precision_score(y_true, y_pred, average='macro'))
-
-        torch.save(torch.tensor(accuracy_score(y_true, y_pred)), data_set+'_accuracy.pt')
         print("exactitude : ", accuracy_score(y_true, y_pred))
         print()
