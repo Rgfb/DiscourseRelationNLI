@@ -66,7 +66,7 @@ print("test :", Counter(y['test']))
 # - d'un dictionnaire gold_class2i qui a une classe associe un entier
 
 i2gold_class = list(set(y['train']))
-gold_class2i = {gold_class : i for i, gold_class in enumerate(i2gold_class)}
+gold_class2i = {gold_class: i for i, gold_class in enumerate(i2gold_class)}
 print(i2gold_class)
 print(gold_class2i)
 
@@ -113,7 +113,6 @@ discourse_relation_mlp.evaluation("test", Arg1["test"], Arg2["test"], y["test"])
 
 # courbe d'evolution de la loss
 
-
 def plot_loss():
     plt.figure()
     abs = list(range(0, len(dev_losses)*discourse_relation_mlp.reg, discourse_relation_mlp.reg))
@@ -149,28 +148,28 @@ repartition = Counter([(nli_class, i2gold_class[int(disc_rel)])
 repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
                            for nli_class, disc_rel in zip(y['snli dev'], predict_revNLI.tolist())])
 
-comb = Counter([(nli_class, i2gold_class[int(disc_rel)], i2gold_class[int(disc_rel_rev)])
+comb = Counter([(nli_class, (i2gold_class[int(disc_rel)], i2gold_class[int(disc_rel_rev)]))
                 for nli_class, disc_rel, disc_rel_rev in zip(y['snli dev'], predict_NLI.tolist(), predict_revNLI.tolist())])
 
 i2nli = ['contradiction', 'entailment', 'neutral']
 
 
-def save_plot(matrix, filename, index=i2gold_class, columns=['contradiction', 'entailment', 'neutral']):
+def save_plot(matrix, filename, index=i2gold_class, columns=i2nli):
     plt.figure()
     df_cm = DataFrame(matrix, index=index, columns=columns)
     ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".2f")
     heatmap = ax.get_figure()
-    heatmap.savefig(filename,bbox_inches='tight')
+    heatmap.savefig(filename, bbox_inches='tight')
 
 
-mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
-save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation.png'))
+withoutnorm = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
+save_plot(withoutnorm.T, os.path.join(".", "Images", 'AvantNormalisation.png'))
 
-mat1 = mat.T/torch.sum(mat, axis=1)
-save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI.png'))
+snlinorm = withoutnorm.T/torch.sum(withoutnorm, axis=1)
+save_plot(snlinorm, os.path.join(".", "Images", 'ApresNormalisationSNLI.png'))
 
-mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB.png'))
+pdtbnorm = withoutnorm/torch.sum(withoutnorm, axis=0)
+save_plot(pdtbnorm.T, os.path.join(".", "Images", 'ApresNormalisationPDTB.png'))
 
 
 mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
@@ -185,7 +184,7 @@ save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'))
 
 i2gold_class_squared = [(rel1, rel2) for rel1 in i2gold_class for rel2 in i2gold_class]
 
-mat = torch.tensor([[comb[(nli_class, rel1, rel2)] for (rel1, rel2) in i2gold_class_squared] for nli_class in i2nli])
+mat = torch.tensor([[comb[(nli_class, rel_couple)] for rel_couple in i2gold_class_squared] for nli_class in i2nli])
 save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'), index=i2gold_class_squared)
 
 mat1 = mat.T/torch.sum(mat, axis=1)

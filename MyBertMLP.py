@@ -64,47 +64,59 @@ class BertMLP(nn.Module):
 
         return log_prob
 
-    """ 
-    l'entrainement du MLP
+    def sampling(self, examples, size_of_samples):
+        # creation du sample sur lequel on va s'entrainer
+        arg1_sample = []
+        arg2_sample = []
+        y_sample = []
 
-    reg : regularite du calcul de la loss (on calcule la loss toutes les reg epoques)
-    down_sampling : booleen pour savoir si on fait du down sampling
-    size_of_samples : taille des samples lorsqu'on fait du down sampling
-    """
+        for gold_class in range(len(self.i2goldclasses)):
+            # shuffle pour ne pas prendre les mêmes exemples à chaque fois
+            shuffle(examples[gold_class])
+
+            for vector in examples[gold_class][:size_of_samples]:
+                arg1_sample.append(vector[0])
+                arg2_sample.append(vector[1])
+                y_sample.append(gold_class)
+
+        return arg1_sample, arg2_sample, y_sample
 
     def training_step(self, optimizer, nb_epoch=2, patience=2, reg=1,
-                      down_sampling=True, size_of_samples=2000):
+                      down_sampling=True, fixed_sampling=False, size_of_samples=2000):
+
+        """
+        l'entrainement du MLP
+
+        reg : regularite du calcul de la loss (on calcule la loss toutes les reg epoques)
+        down_sampling : booleen pour savoir si on fait du down sampling
+        size_of_samples : taille des samples lorsqu'on fait du down sampling
+        """
+
         # les listes qui contiendront les valeurs de la loss sur le dev et le train pour chaque époque
         dev_losses = []
         train_losses = []
 
+        # est-ce qu'on veut faire du down sampling ou non
         if down_sampling:
             examples = defaultdict(lambda: [])
             for arg1, arg2, label in zip(self.Arg1train, self.Arg2train, self.ytrain):
                 examples[label].append((arg1, arg2))
 
+            if fixed_sampling:
+                # creation du sample sur lequel on va s'entrainer
+                arg1_sample, arg2_sample, y_sample = self.sampling(examples, size_of_samples)
+
+        else:
+            arg1_sample, arg2_sample, y_sample = self.Arg1train, self.Arg2train, self.ytrain
+
         for epoch in range(nb_epoch):
 
-            # est-ce qu'on veut faire du downsampling ou non
-            if down_sampling:
+            # est-ce qu'on veut faire du downsampling fixe ou non
+            if down_sampling and not fixed_sampling:
                 # creation du sample sur lequel on va s'entrainer
-                arg1_sample = []
-                arg2_sample = []
-                y_sample = []
+                arg1_sample, arg2_sample, y_sample = self.sampling(examples, size_of_samples)
 
-                for gold_class in range(len(self.i2goldclasses)):
-                    # shuffle pour ne pas prendre les mêmes exemples à chaque fois
-                    shuffle(examples[gold_class])
-
-                    for vector in examples[gold_class][:size_of_samples]:
-                        arg1_sample.append(vector[0])
-                        arg2_sample.append(vector[1])
-                        y_sample.append(gold_class)
-
-            else:
-                arg1_sample, arg2_sample, y_sample = self.Arg1train, self.Arg2train, self.ytrain
-
-                # melange du sample pour ne pas toujours s'entrainer sur les labels dans le même ordre
+            # melange du sample pour ne pas toujours s'entrainer sur les labels dans le même ordre
             sample = list(zip(arg1_sample, arg2_sample, y_sample))
             shuffle(sample)
             arg1_sample, arg2_sample, y_sample = zip(*sample)
