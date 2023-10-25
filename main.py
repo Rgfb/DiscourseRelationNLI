@@ -99,7 +99,7 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
                                                                 patience=2,
                                                                 down_sampling=True,
-                                                                size_of_samples=2500)
+                                                                size_of_samples=3000)
 
 
 predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
