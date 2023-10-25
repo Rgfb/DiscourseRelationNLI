@@ -198,7 +198,9 @@ mat2 = mat/torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'))
 
 
-mat = torch.tensor([[comb[(nli_class, rel1, rel2)] for rel1 in i2gold_class for rel2 in i2gold_class] for nli_class in i2nli])
+i2gold_class_squared = [(rel1, rel2) for rel1 in i2gold_class for rel2 in i2gold_class]
+
+mat = torch.tensor([[comb[(nli_class, rel1, rel2)] for (rel1, rel2) in i2gold_class_squared] for nli_class in i2nli])
 save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'))
 
 mat1 = mat.T/torch.sum(mat, axis=1)
