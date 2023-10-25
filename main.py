@@ -39,7 +39,7 @@ MAX_LENGTH = 128
 
 # -------------------- Les Partitionnements du PDTB ------------------------------
 
-Arg1, Arg2, y = PDTBRreader().split(split='JI')
+Arg1, Arg2, y = PDTBRreader().split(split='Ji')
 
 # -------------------- ouverture du csv associé au test du SNLI ------------------------------
 """
