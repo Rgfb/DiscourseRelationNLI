@@ -11,7 +11,6 @@ class FileReader:
     def __init__(self):
         self.Arg1, self.Arg2, self.y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(lambda: [])
 
-
     def read_pdtb(self, split='CB'):
         self.pdtb = []
         # Chargement du fichier pdtb2

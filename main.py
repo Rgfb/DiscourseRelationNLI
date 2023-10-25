@@ -39,7 +39,7 @@ MAX_LENGTH = 128
 
 # -------------------- Les Partitionnements du PDTB ------------------------------
 
-readfile = FileReader
+readfile = FileReader()
 readfile.read_pdtb(split='Ji')
 readfile.read_snli(part='dev')
 
