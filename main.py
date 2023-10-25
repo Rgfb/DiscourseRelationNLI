@@ -201,10 +201,10 @@ save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'))
 i2gold_class_squared = [(rel1, rel2) for rel1 in i2gold_class for rel2 in i2gold_class]
 
 mat = torch.tensor([[comb[(nli_class, rel1, rel2)] for (rel1, rel2) in i2gold_class_squared] for nli_class in i2nli])
-save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'))
+save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'), index=i2gold_class_squared)
 
 mat1 = mat.T/torch.sum(mat, axis=1)
-save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_comb.png'))
+save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_comb.png'), index=i2gold_class_squared)
 
 mat2 = mat/torch.sum(mat, axis=0)
-save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'))
+save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'), index=i2gold_class_squared)
