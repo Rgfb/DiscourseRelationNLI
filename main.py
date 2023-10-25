@@ -37,7 +37,7 @@ print(device)
 MAX_LENGTH = 128
 
 
-# -------------------- Les Partitionnements du PDTB ------------------------------
+# ------------------------ Lecture des fichiers ------------------------
 
 readfile = FileReader()
 readfile.read_pdtb(split='Ji')
@@ -96,9 +96,10 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
                          weight_decay=l2_reg)
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1,
-                                                                down_sampling=False,
-                                                                size_of_samples=2000)
+                                                                nb_epoch=1000,
+                                                                patience=1,
+                                                                down_sampling=True,
+                                                                size_of_samples=2500)
 
 
 predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
