@@ -1,5 +1,5 @@
 """
-A FAIRE
+A FAIRE :
 
 UN ARGPARSE
 
@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import os
+import argparse
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -38,7 +39,7 @@ for example in reader:
 
 
 # -------------------- Les Partitionnements du PDTB ------------------------------
-split = 'CB'
+split = 'Ji'
 if split == 'CB':
     split_set2sec = {"dev": [0, 1, 23, 24], "test": [21, 22], "train": list(range(2, 21))}
 if split == 'Lin':
@@ -126,13 +127,14 @@ for s in ['test', 'train', 'dev']:
     y[s] = [gold_class2i[gold_class] for gold_class in y[s]]
 
 
-# --------------------- création du classifieur -----------------------
+# -------------------------- création du classifieur -------------------------------
 
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
                                  dropout=0.5, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
                                  Arg1train=Arg1['train'], Arg2train=Arg2['train'], ytrain=y['train'],
                                  Arg1dev=Arg1['dev'], Arg2dev=Arg2['dev'], ydev=y['dev'],
                                  i2goldclasses=i2gold_class)
+
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # quelques hyperparametres
@@ -196,7 +198,9 @@ repartition = Counter([(nli_class, i2gold_class[int(disc_rel)])
                        for nli_class, disc_rel in zip(y_nli, predict_NLI.tolist())])
 repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
                            for nli_class, disc_rel in zip(y_nli, predict_revNLI.tolist())])
-# print(repartition)
+
+comb = Counter([(nli_class, i2gold_class[int(disc_rel)], i2gold_class[int(disc_rel)])
+                for nli_class, disc_rel, disc_rel_rev in zip(y_nli, predict_NLI.tolist(), predict_revNLI.tolist())])
 
 i2nli = ['contradiction', 'entailment', 'neutral']
 
@@ -206,7 +210,7 @@ def save_plot(matrix, filename, index=i2gold_class, columns=['contradiction', 'e
     df_cm = DataFrame(matrix, index=index, columns=columns)
     ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".2f")
     heatmap = ax.get_figure()
-    heatmap.savefig(filename, dpi=400)
+    heatmap.savefig(filename,bbox_inches='tight')
 
 
 mat = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
@@ -227,3 +231,13 @@ save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_rev.png'))
 
 mat2 = mat/torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'))
+
+
+mat = torch.tensor([[comb[(nli_class, rel1, rel2)] for rel1 in i2gold_class for rel2 in i2gold_class] for nli_class in i2nli])
+save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'))
+
+mat1 = mat.T/torch.sum(mat, axis=1)
+save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_comb.png'))
+
+mat2 = mat/torch.sum(mat, axis=0)
+save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'))
