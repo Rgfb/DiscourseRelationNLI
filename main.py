@@ -97,7 +97,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
-                                                                patience=1,
+                                                                patience=2,
                                                                 down_sampling=True,
                                                                 size_of_samples=2500)
 
@@ -149,7 +149,7 @@ repartition = Counter([(nli_class, i2gold_class[int(disc_rel)])
 repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
                            for nli_class, disc_rel in zip(y['snli dev'], predict_revNLI.tolist())])
 
-comb = Counter([(nli_class, i2gold_class[int(disc_rel)], i2gold_class[int(disc_rel)])
+comb = Counter([(nli_class, i2gold_class[int(disc_rel)], i2gold_class[int(disc_rel_rev)])
                 for nli_class, disc_rel, disc_rel_rev in zip(y['snli dev'], predict_NLI.tolist(), predict_revNLI.tolist())])
 
 i2nli = ['contradiction', 'entailment', 'neutral']
