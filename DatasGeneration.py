@@ -47,10 +47,8 @@ class FileReader:
         for example in pdtb:
             section = int(example['Section'])
             if example['Relation'] == 'Implicit' and section in split_sec2set:
-                if 'Reason' in example['ConnHeadSemClass1'].split('.'):
-                    gold_class = 'Reason'
-                elif 'Result' in example['ConnHeadSemClass1'].split('.'):
-                    gold_class = 'Result'
+                if 'Specification' in example['ConnHeadSemClass1'].split('.'):
+                    gold_class = 'Specification'
                 else:
                     gold_class = 'Autre'
                 self.Arg1[split_sec2set[section]].append(example['Arg1_RawText'])

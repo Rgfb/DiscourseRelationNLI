@@ -99,7 +99,8 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
                                                                 patience=2,
                                                                 down_sampling=True,
-                                                                size_of_samples=1500)
+                                                                size_of_samples=1500,
+                                                                fixed_sampling=True)
 
 
 predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
@@ -136,7 +137,7 @@ torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 # discourse_relation_mlp = torch.load('fourth_model.pth')
 
 
-# --------------- prediction des relations de discours sur le SNLI -----------------
+# --------------- prediction des relations de discours sur le SNLI -----------------------------
 predict_NLI = discourse_relation_mlp.predict(Arg1['snli dev'], Arg2['snli dev'])
 predict_revNLI = discourse_relation_mlp.predict(Arg2['snli dev'], Arg1['snli dev'])
 
