@@ -13,9 +13,13 @@ faire une methode pour les heatmap
 Commenter un peu la fin ...
 """
 # --------------------- Installations et Imports -------------------------
+
+from MyBertMLP import BertMLP
+from DatasGeneration import PDTBRreader
+
 import csv
 from collections import Counter, defaultdict
-from MyBertMLP import BertMLP
+
 import pandas as pd
 from pandas import DataFrame
 import seaborn as sn
@@ -32,49 +36,10 @@ print(device)
 
 MAX_LENGTH = 128
 
-pdtb2 = []
-reader = csv.DictReader(open('datas/pdtb2.csv/pdtb2.csv', 'r'))
-for example in reader:
-    pdtb2.append(example)
-
 
 # -------------------- Les Partitionnements du PDTB ------------------------------
-split = 'Ji'
-if split == 'CB':
-    split_set2sec = {"dev": [0, 1, 23, 24], "test": [21, 22], "train": list(range(2, 21))}
-if split == 'Lin':
-    split_set2sec = {"dev": [22], "test": [23], "train": list(range(2, 22))}
-if split == 'Ji':
-    split_set2sec = {"dev": [0, 1], "test": [21, 22], "train": list(range(2, 21))}
 
-split_sec2set = {}
-for key, value in split_set2sec.items():
-    for section in value:
-        split_sec2set[section] = key
-
-
-"""
-Chargement du fichier pdtb2
-Arg1 contient les 1eres phrases, Arg2 les deuxiemes, 
-y les goldclass (ie les relations de discours qui nous interessent)
-"""
-
-Arg1, Arg2, y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(lambda: [])
-# shuffle(pdtb2)
-for example in pdtb2:
-    if example['Relation'] == 'Implicit':
-        if 'Specification' in example['ConnHeadSemClass1'].split('.'):
-            gold_class = 'Specification'
-        elif 'Reason' in example['ConnHeadSemClass1'].split('.'):
-            gold_class = 'Reason'
-        elif 'Result' in example['ConnHeadSemClass1'].split('.'):
-            gold_class = 'Result'
-        else:
-            gold_class = example['ConnHeadSemClass1'].split('.')[0]
-        Arg1[split_sec2set[int(example['Section'])]].append(example['Arg1_RawText'])
-        Arg2[split_sec2set[int(example['Section'])]].append(example['Arg2_RawText'])
-        y[split_sec2set[int(example['Section'])]].append(gold_class)
-
+Arg1, Arg2, y = PDTBRreader().split(split='JI')
 
 # -------------------- ouverture du csv associé au test du SNLI ------------------------------
 """
@@ -147,7 +112,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
                          weight_decay=l2_reg)
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1000,
+                                                                nb_epoch=0,
                                                                 down_sampling=False,
                                                                 size_of_samples=2000)
 

@@ -9,6 +9,7 @@ from random import shuffle
 from collections import Counter, defaultdict
 from transformers import AutoModel, AutoTokenizer
 
+
 # ----------------------- Le Modèle ---------------------------------
 
 """
