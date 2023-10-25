@@ -15,7 +15,7 @@ Commenter un peu la fin ...
 # --------------------- Installations et Imports -------------------------
 
 from MyBertMLP import BertMLP
-from DatasGeneration import PDTBRreader
+from DatasGeneration import FileReader
 
 import csv
 from collections import Counter, defaultdict
@@ -39,27 +39,11 @@ MAX_LENGTH = 128
 
 # -------------------- Les Partitionnements du PDTB ------------------------------
 
-Arg1, Arg2, y = PDTBRreader().split(split='Ji')
+readfile = FileReader
+readfile.read_pdtb(split='Ji')
+readfile.read_snli(part='dev')
 
-# -------------------- ouverture du csv associé au test du SNLI ------------------------------
-"""
-les colonnes qui nous intéressent :
-    les 2 phrases (dans l'ordre)
-    la goldclass
-"""
-
-snli_test = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_dev.txt", sep="\t")
-snli_test = snli_test[['gold_label', 'sentence1', 'sentence2']]
-
-y_nli = []
-for gold, sent1, sent2 in zip(snli_test['gold_label'], snli_test['sentence1'], snli_test['sentence2']):
-    if gold != '-':
-        if isinstance(sent2, float):
-            print(sent1, '\n', sent2, '\n', gold, '\n')
-        else:
-            Arg1['snli dev'].append(sent1)
-            Arg2['snli dev'].append(sent2)
-            y_nli.append(gold)
+Arg1, Arg2, y = readfile.Arg1, readfile.Arg2, readfile.y
 
 
 # nombre d'exemples par set
@@ -112,7 +96,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
                          weight_decay=l2_reg)
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=0,
+                                                                nb_epoch=1,
                                                                 down_sampling=False,
                                                                 size_of_samples=2000)
 
@@ -160,12 +144,12 @@ predict_revNLI = discourse_relation_mlp.predict(Arg2['snli dev'], Arg1['snli dev
 # ------------- La repartition des relations de discours predites sur le SNLI --------------------
 
 repartition = Counter([(nli_class, i2gold_class[int(disc_rel)])
-                       for nli_class, disc_rel in zip(y_nli, predict_NLI.tolist())])
+                       for nli_class, disc_rel in zip(y['snli dev'], predict_NLI.tolist())])
 repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
-                           for nli_class, disc_rel in zip(y_nli, predict_revNLI.tolist())])
+                           for nli_class, disc_rel in zip(y['snli dev'], predict_revNLI.tolist())])
 
 comb = Counter([(nli_class, i2gold_class[int(disc_rel)], i2gold_class[int(disc_rel)])
-                for nli_class, disc_rel, disc_rel_rev in zip(y_nli, predict_NLI.tolist(), predict_revNLI.tolist())])
+                for nli_class, disc_rel, disc_rel_rev in zip(y['snli dev'], predict_NLI.tolist(), predict_revNLI.tolist())])
 
 i2nli = ['contradiction', 'entailment', 'neutral']
 

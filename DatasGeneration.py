@@ -1,18 +1,23 @@
 # --------------------- Installations et Imports -------------------------
+
 import csv
 from collections import defaultdict
+import pandas as pd
 
 
-class PDTBRreader:
+# ---------------- Lecture et Partitionnement du PDTB ----------------------
+class FileReader:
 
     def __init__(self):
+        self.Arg1, self.Arg2, self.y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(lambda: [])
+
+
+    def read_pdtb(self, split='CB'):
         self.pdtb = []
         # Chargement du fichier pdtb2
         reader = csv.DictReader(open('datas/pdtb2.csv/pdtb2.csv', 'r'))
         for example in reader:
             self.pdtb.append(example)
-
-    def split(self, split='CB'):
 
         """
         split : le partitionnement des données (CB pour celui de Chloé Braud,
@@ -39,15 +44,28 @@ class PDTBRreader:
         Arg1 contient les 1eres phrases, Arg2 les deuxiemes, 
         y les goldclass (ie les relations de discours qui nous interessent)
         """
-        Arg1, Arg2, y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(lambda: [])
         for example in self.pdtb:
             section = int(example['Section'])
             if example['Relation'] == 'Implicit' and section in self.split_sec2set:
                 gold_class = example['ConnHeadSemClass1'].split('.')[0]
-                Arg1[self.split_sec2set[section]].append(example['Arg1_RawText'])
-                Arg2[self.split_sec2set[section]].append(example['Arg2_RawText'])
-                y[self.split_sec2set[section]].append(gold_class)
-        return Arg1, Arg2, y
+                self.Arg1[self.split_sec2set[section]].append(example['Arg1_RawText'])
+                self.Arg2[self.split_sec2set[section]].append(example['Arg2_RawText'])
+                self.y[self.split_sec2set[section]].append(gold_class)
 
-
-
+    def read_snli(self, part='dev'):
+        """
+        Lecture de la partie (train, test, dev) qui nous intéresse
+        les colonnes qui nous intéressent :
+            les 2 phrases (dans l'ordre)
+            la goldclass
+        """
+        file = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_"+part+".txt", sep="\t")
+        file = file[['gold_label', 'sentence1', 'sentence2']]
+        for gold, sent1, sent2 in zip(file['gold_label'], file['sentence1'], file['sentence2']):
+            if gold != '-':
+                if isinstance(sent2, float):
+                    print(sent1, '\n', sent2, '\n', gold, '\n')
+                else:
+                    self.Arg1['snli ' + part].append(sent1)
+                    self.Arg2['snli ' + part].append(sent2)
+                    self.y['snli ' + part].append(gold)
