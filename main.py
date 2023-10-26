@@ -88,7 +88,7 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # quelques hyperparametres
 learning_rate = 0.00001
-l2_reg = 0.0001
+l2_reg = 0.00001
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
@@ -97,9 +97,9 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
-                                                                patience=2,
+                                                                patience=1,
                                                                 down_sampling=True,
-                                                                size_of_samples=1500,
+                                                                size_of_samples=1000,
                                                                 fixed_sampling=False)
 
 
