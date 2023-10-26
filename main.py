@@ -99,7 +99,7 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
                                                                 patience=1,
                                                                 down_sampling=True,
-                                                                size_of_samples=1000,
+                                                                size_of_samples=3000,
                                                                 fixed_sampling=False)
 
 
