@@ -95,9 +95,9 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
-                                                                patience=1,
+                                                                patience=2,
                                                                 down_sampling=True,
-                                                                size_of_samples=3000,
+                                                                size_of_samples=5000,
                                                                 fixed_sampling=False)
 
 
