@@ -46,18 +46,15 @@ class FileReader:
 
         for example in pdtb:
             section = int(example['Section'])
-            if example['Relation'] == 'Implicit' and section in split_sec2set:
-                if 'Specification' in example['ConnHeadSemClass1'].split('.'):
-                    gold_class = 'Specification'
-                else:
-                    gold_class = 'Autre'
+            if (example['Relation'] == 'Implicit' or example['Relation'] == 'Explicit') and section in split_sec2set:
+                gold_class = example['ConnHeadSemClass1'].split('.')[0]
                 self.Arg1[split_sec2set[section]].append(example['Arg1_RawText'])
                 self.Arg2[split_sec2set[section]].append(example['Arg2_RawText'])
                 self.y[split_sec2set[section]].append(gold_class)
 
     def read_snli(self, part='dev'):
         """
-        Lecture de la partie (train, test, dev) qui nous intéresse
+        Lecture de la partie (train, test, ou dev) qui nous intéresse
         les colonnes qui nous intéressent :
             les 2 phrases (dans l'ordre)
             la goldclass
@@ -69,6 +66,6 @@ class FileReader:
                 if isinstance(sent2, float):
                     print(sent1, '\n', sent2, '\n', gold, '\n')
                 else:
-                    self.Arg1['snli ' + part].append(sent1)
-                    self.Arg2['snli ' + part].append(sent2)
-                    self.y['snli ' + part].append(gold)
+                    self.Arg1['snli_' + part].append(sent1)
+                    self.Arg2['snli_' + part].append(sent2)
+                    self.y['snli_' + part].append(gold)

@@ -86,25 +86,19 @@ discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer
 
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
-# quelques hyperparametres
-learning_rate = 0.00001
-l2_reg = 0.00001
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
-                         lr=learning_rate,
-                         weight_decay=l2_reg)
+                         lr=0.00001,
+                         weight_decay=0.00001)
 
+# entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
                                                                 patience=1,
                                                                 down_sampling=True,
                                                                 size_of_samples=3000,
                                                                 fixed_sampling=False)
-
-
-predict_train = discourse_relation_mlp.predict(Arg1['train'], Arg2['train'])
-print(i2gold_class)
 
 
 discourse_relation_mlp.evaluation("train", Arg1["train"], Arg2["train"], y["train"])
@@ -138,19 +132,22 @@ torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 
 
 # --------------- prediction des relations de discours sur le SNLI -----------------------------
-predict_NLI = discourse_relation_mlp.predict(Arg1['snli dev'], Arg2['snli dev'])
-predict_revNLI = discourse_relation_mlp.predict(Arg2['snli dev'], Arg1['snli dev'])
+# ordre P H:
+predict_NLI = discourse_relation_mlp.predict(Arg1['snli_dev'], Arg2['snli_dev'])
+
+# ordre H P :
+predict_revNLI = discourse_relation_mlp.predict(Arg2['snli_dev'], Arg1['snli_dev'])
 
 
 # ------------- La repartition des relations de discours predites sur le SNLI --------------------
 
 repartition = Counter([(nli_class, i2gold_class[int(disc_rel)])
-                       for nli_class, disc_rel in zip(y['snli dev'], predict_NLI.tolist())])
+                       for nli_class, disc_rel in zip(y['snli_dev'], predict_NLI.tolist())])
 repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
-                           for nli_class, disc_rel in zip(y['snli dev'], predict_revNLI.tolist())])
+                           for nli_class, disc_rel in zip(y['snli_dev'], predict_revNLI.tolist())])
 
 comb = Counter([(nli_class, (i2gold_class[int(disc_rel)], i2gold_class[int(disc_rel_rev)]))
-                for nli_class, disc_rel, disc_rel_rev in zip(y['snli dev'], predict_NLI.tolist(), predict_revNLI.tolist())])
+                for nli_class, disc_rel, disc_rel_rev in zip(y['snli_dev'], predict_NLI.tolist(), predict_revNLI.tolist())])
 
 i2nli = ['contradiction', 'entailment', 'neutral']
 
