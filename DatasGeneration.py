@@ -16,7 +16,7 @@ class FileReader:
         """
         self.Arg1, self.Arg2, self.y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(lambda: [])
 
-    def read_pdtb(self, split='CB'):
+    def read_pdtb(self, split='CB', relation='Implicit'):
         pdtb = []
         # Chargement du fichier pdtb2
         reader = csv.DictReader(open('datas/pdtb2.csv/pdtb2.csv', 'r'))
@@ -46,11 +46,11 @@ class FileReader:
 
         for example in pdtb:
             section = int(example['Section'])
-            if (example['Relation'] == 'Implicit' or example['Relation'] == 'Explicit') and section in split_sec2set:
+            if example['Relation'] == relation and section in split_sec2set:
                 gold_class = example['ConnHeadSemClass1'].split('.')[0]
-                self.Arg1[split_sec2set[section]].append(example['Arg1_RawText'])
-                self.Arg2[split_sec2set[section]].append(example['Arg2_RawText'])
-                self.y[split_sec2set[section]].append(gold_class)
+                self.Arg1[relation + '_' + split_sec2set[section]].append(example['Arg1_RawText'])
+                self.Arg2[relation + '_' + split_sec2set[section]].append(example['Arg2_RawText'])
+                self.y[relation + '_' + split_sec2set[section]].append(gold_class)
 
     def read_snli(self, part='dev'):
         """
