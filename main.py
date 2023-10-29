@@ -12,6 +12,8 @@ faire une methode pour les heatmap
 
 Commenter un peu la fin ...
 """
+from random import shuffle
+
 # --------------------- Installations et Imports -------------------------
 
 from MyBertMLP import BertMLP
@@ -91,7 +93,7 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
-                         lr=0.00001,
+                         lr=0.000005,
                          weight_decay=0.00007)
 
 # entrainement
@@ -193,21 +195,24 @@ save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_comb.png'), 
 mat2 = mat/torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'), index=i2gold_class_squared)
 
-compteur = defaultdict(lambda: 0)
 
+zipped = list(zip(Arg1['snli_dev'], Arg2['snli_dev'], y['snli_dev'],
+                  predict_NLI.tolist(), predict_revNLI.tolist()))
+shuffle(zipped)
+Args1, Args2, y, predict_NLI, predict_revNLI = zip(*zipped)
+
+compteur = defaultdict(lambda: 0)
 with open('examples.txt', 'w') as f:
-    for arg1, arg2, nli_class, rel, rel_rev in zip(Arg1['snli_dev'],
-                                                   Arg2['snli_dev'],
-                                                   y['snli_dev'],
-                                                   predict_NLI.tolist(),
-                                                   predict_revNLI.tolist()):
+    for arg1, arg2, nli_class, rel, rel_rev in zip(Args1, Args2, y,
+                                                   predict_NLI,
+                                                   predict_revNLI):
         rel = i2gold_class[int(rel)]
         rel_rev = i2gold_class[int(rel_rev)]
         if compteur[rel + rel_rev + nli_class] == 5:
             pass
         else:
             compteur[rel + rel_rev + nli_class] += 1
-            f.write('Classe NLI : ' + nli_class)
+            f.write('Classe NLI : ' + nli_class + '\n')
             f.write('Rel(Arg1, Arg2) : ' + rel + '\n')
             f.write('Rel(Arg2, Arg1) : ' + rel_rev + '\n')
             f.write('Arg1 : ' + arg1 + '\n')
