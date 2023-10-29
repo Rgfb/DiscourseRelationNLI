@@ -92,7 +92,7 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
                          lr=0.00001,
-                         weight_decay=0.00001)
+                         weight_decay=0.0001)
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
@@ -195,11 +195,12 @@ save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png')
 
 compteur = defaultdict(lambda: 0)
 with open('examples.txt', 'w') as f:
-    for arg1, arg2, rel, rel_rev in zip(Arg1['snli_dev'], Arg2['snli_dev'], predict_NLI, predict_revNLI):
-        if compteur[rel+rel_rev] == 5:
+    for arg1, arg2, nli_class, rel, rel_rev in zip(Arg1['snli_dev'], Arg2['snli_dev'], y['snli_dev'], predict_NLI, predict_revNLI):
+        if compteur[i2gold_class[rel] + i2gold_class[rel_rev] + nli_class] == 5:
             pass
         else:
-            compteur[rel+rel_rev] += 1
+            compteur[i2gold_class[rel] + i2gold_class[rel_rev] + nli_class] += 1
+            f.write('Classe NLI : ' + nli_class)
             f.write('Rel(Arg1, Arg2) : ' + rel + '\n')
             f.write('Rel(Arg2, Arg1) : ' + rel_rev + '\n')
             f.write('Arg1 : ' + arg1 + '\n')
