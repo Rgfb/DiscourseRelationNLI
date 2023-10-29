@@ -96,7 +96,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1000,
+                                                                nb_epoch=1,
                                                                 patience=2,
                                                                 down_sampling=True,
                                                                 size_of_samples=2500,
@@ -194,8 +194,9 @@ mat2 = mat/torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'), index=i2gold_class_squared)
 
 compteur = defaultdict(lambda: 0)
-with open('examples.txt', 'w') as f:
-    for arg1, arg2, nli_class, rel, rel_rev in zip(Arg1['snli_dev'], Arg2['snli_dev'], y['snli_dev'], predict_NLI, predict_revNLI):
+with (open('examples.txt', 'w') as f):
+    for arg1, arg2, nli_class, rel, rel_rev in zip(Arg1['snli_dev'], Arg2['snli_dev'],
+                                                   y['snli_dev'], predict_NLI.tolist(), predict_revNLI.tolist()):
         if compteur[i2gold_class[rel] + i2gold_class[rel_rev] + nli_class] == 5:
             pass
         else:
