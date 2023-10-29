@@ -38,7 +38,7 @@ MAX_LENGTH = 128
 
 
 # ------------------------ Lecture des fichiers ------------------------
-relation='Implicit'
+relation = 'Implicit'
 readfile = FileReader()
 readfile.read_pdtb(split='Ji', relation='Implicit')
 readfile.read_snli(part='dev')
@@ -92,11 +92,11 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
                          lr=0.00001,
-                         weight_decay=0.0001)
+                         weight_decay=0.00007)
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1,
+                                                                nb_epoch=1000,
                                                                 patience=2,
                                                                 down_sampling=True,
                                                                 size_of_samples=2500,
