@@ -40,7 +40,7 @@ MAX_LENGTH = 128
 # ------------------------ Lecture des fichiers ------------------------
 
 readfile = FileReader()
-readfile.read_pdtb(split='Ji', relation='Explicit')
+readfile.read_pdtb(split='Ji', relation='Implicit')
 readfile.read_snli(part='dev')
 
 Arg1, Arg2, y = readfile.Arg1, readfile.Arg2, readfile.y
@@ -97,7 +97,7 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
                                                                 patience=2,
                                                                 down_sampling=True,
-                                                                size_of_samples=5000,
+                                                                size_of_samples=2500,
                                                                 fixed_sampling=False)
 
 
@@ -190,3 +190,16 @@ save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_comb.png'), 
 
 mat2 = mat/torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'), index=i2gold_class_squared)
+
+compteur = defaultdict(lambda: 0)
+with open('examples.txt', 'w') as f:
+    for arg1, arg2, rel, rel_rev in zip(Arg1['snli_dev'], Arg2['snli_dev'], predict_NLI, predict_revNLI):
+        if compteur[rel+rel_rev] == 5:
+            pass
+        else:
+            compteur[rel+rel_rev] += 1
+            f.write('Rel(Arg1, Arg2) : ' + rel + '\n')
+            f.write('Rel(Arg2, Arg1) : ' + rel_rev + '\n')
+            f.write('Arg1 : ' + arg1 + '\n')
+            f.write('Arg2 : ' + arg2 + '\n')
+            f.write('\n')
