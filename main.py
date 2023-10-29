@@ -201,10 +201,12 @@ with open('examples.txt', 'w') as f:
                                                    y['snli_dev'],
                                                    predict_NLI.tolist(),
                                                    predict_revNLI.tolist()):
-        if compteur[i2gold_class[rel] + i2gold_class[rel_rev] + nli_class] == 5:
+        rel = i2gold_class[int(rel)]
+        rel_rev = i2gold_class[int(rel_rev)]
+        if compteur[rel + rel_rev + nli_class] == 5:
             pass
         else:
-            compteur[i2gold_class[rel] + i2gold_class[rel_rev] + nli_class] += 1
+            compteur[rel + rel_rev + nli_class] += 1
             f.write('Classe NLI : ' + nli_class)
             f.write('Rel(Arg1, Arg2) : ' + rel + '\n')
             f.write('Rel(Arg2, Arg1) : ' + rel_rev + '\n')
