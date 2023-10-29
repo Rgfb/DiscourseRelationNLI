@@ -195,8 +195,12 @@ save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png')
 
 compteur = defaultdict(lambda: 0)
 
-with (open('examples.txt', 'w') as f):
-    for arg1, arg2, nli_class, rel, rel_rev in zip(Arg1['snli_dev'], Arg2['snli_dev'], y['snli_dev'], predict_NLI.tolist(), predict_revNLI.tolist()):
+with open('examples.txt', 'w') as f:
+    for arg1, arg2, nli_class, rel, rel_rev in zip(Arg1['snli_dev'],
+                                                   Arg2['snli_dev'],
+                                                   y['snli_dev'],
+                                                   predict_NLI.tolist(),
+                                                   predict_revNLI.tolist()):
         if compteur[i2gold_class[rel] + i2gold_class[rel_rev] + nli_class] == 5:
             pass
         else:
