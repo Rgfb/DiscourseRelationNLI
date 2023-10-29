@@ -38,7 +38,7 @@ MAX_LENGTH = 128
 
 
 # ------------------------ Lecture des fichiers ------------------------
-
+relation='Implicit'
 readfile = FileReader()
 readfile.read_pdtb(split='Ji', relation='Implicit')
 readfile.read_snli(part='dev')
@@ -56,23 +56,23 @@ print(len(Arg1['test']), len(Arg2['test']), len(y['test']))
 
 # distribution des labels
 
-print("train :", Counter(y['Explicit_train']))
-print("dev :", Counter(y['Explicit_dev']))
-print("test :", Counter(y['Explicit_test']))
+print("train :", Counter(y[relation + '_train']))
+print("dev :", Counter(y[relation + '_dev']))
+print("test :", Counter(y[relation + '_test']))
 
 
 # création d'une correspondance (goldclass <-> entier) à l'aide :
 # - d'une liste i2gold_class qui a un entier associe une class
 # - d'un dictionnaire gold_class2i qui a une classe associe un entier
 
-i2gold_class = list(set(y['Explicit_train']))
+i2gold_class = list(set(y[relation + '_train']))
 gold_class2i = {gold_class: i for i, gold_class in enumerate(i2gold_class)}
 print(i2gold_class)
 print(gold_class2i)
 
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
-for s in ['Explicit_test', 'Explicit_train', 'Explicit_dev']:
+for s in [relation + '_test', relation + '_train', relation + '_dev']:
     y[s] = [gold_class2i[gold_class] for gold_class in y[s]]
 
 
@@ -80,8 +80,10 @@ for s in ['Explicit_test', 'Explicit_train', 'Explicit_dev']:
 
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
                                  dropout=0.5, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
-                                 Arg1train=Arg1['Explicit_train'], Arg2train=Arg2['Explicit_train'], ytrain=y['Explicit_train'],
-                                 Arg1dev=Arg1['Explicit_dev'], Arg2dev=Arg2['Explicit_dev'], ydev=y['Explicit_dev'],
+                                 Arg1train=Arg1[relation + '_train'], Arg2train=Arg2[relation + '_train'],
+                                 ytrain=y[relation + '_train'],
+                                 Arg1dev=Arg1[relation + '_dev'], Arg2dev=Arg2[relation + '_dev'],
+                                 ydev=y[relation + '_dev'],
                                  i2goldclasses=i2gold_class)
 
 discourse_relation_mlp = discourse_relation_mlp.to(device)
@@ -101,9 +103,9 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 fixed_sampling=False)
 
 
-discourse_relation_mlp.evaluation("train", Arg1["Explicit_train"], Arg2["Explicit_train"], y["Explicit_train"])
-discourse_relation_mlp.evaluation("dev", Arg1["Explicit_dev"], Arg2["Explicit_dev"], y["Explicit_dev"])
-discourse_relation_mlp.evaluation("test", Arg1["Explicit_test"], Arg2["Explicit_test"], y["Explicit_test"])
+discourse_relation_mlp.evaluation("train", Arg1[relation + '_train'], Arg2[relation + '_train'], y[relation + '_train'])
+discourse_relation_mlp.evaluation("dev", Arg1[relation + '_dev'], Arg2[relation + '_dev'], y[relation + '_dev'])
+discourse_relation_mlp.evaluation("test", Arg1[relation + '_test'], Arg2[relation + '_test'], y[relation + '_test'])
 
 
 # courbe d'evolution de la loss
