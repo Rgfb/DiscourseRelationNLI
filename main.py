@@ -93,7 +93,7 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
-                         lr=0.000005,
+                         lr=0.00005,
                          weight_decay=0.00007)
 
 # entrainement
