@@ -80,8 +80,8 @@ for s in [relation + '_test', relation + '_train', relation + '_dev']:
 
 # -------------------------- création du classifieur -------------------------------
 
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
-                                 dropout=0.5, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=25, size_of_batch=100,
+                                 dropout=0.6, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
                                  Arg1train=Arg1[relation + '_train'], Arg2train=Arg2[relation + '_train'],
                                  ytrain=y[relation + '_train'],
                                  Arg1dev=Arg1[relation + '_dev'], Arg2dev=Arg2[relation + '_dev'],
@@ -93,7 +93,7 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
-                         lr=0.000015,
+                         lr=0.000005,
                          weight_decay=0.00007)
 
 # entrainement
@@ -101,7 +101,7 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=1000,
                                                                 patience=2,
                                                                 down_sampling=True,
-                                                                size_of_samples=2000,
+                                                                size_of_samples=2500,
                                                                 fixed_sampling=False)
 
 
