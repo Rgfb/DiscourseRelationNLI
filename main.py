@@ -17,7 +17,7 @@ from random import shuffle
 # --------------------- Installations et Imports -------------------------
 
 from MyBertMLP import BertMLP
-from DatasGeneration import FileReader
+from DatasGeneration import PDTBReader, SNLIReader
 
 import csv
 from collections import Counter, defaultdict
@@ -41,12 +41,15 @@ MAX_LENGTH = 128
 
 # ------------------------ Lecture des fichiers ------------------------
 relation = 'Implicit'
-readfile = FileReader()
-readfile.read_pdtb(split='Ji', relation='Implicit')
-readfile.read_snli(part='dev')
+pdtb = PDTBReader()
+pdtb.read(split='Ji', relation='Implicit')
 
-Arg1, Arg2, y = readfile.Arg1, readfile.Arg2, readfile.y
+Arg1PDTB, Arg2PDTB, conn, rel = pdtb.Arg1, pdtb.Arg2, pdtb.conn, pdtb.rel
 
+snli = SNLIReader()
+snli.read(part='dev')
+
+Arg1SNLI, Arg2SNLI, y = snli.Arg1, snli.Arg2, snli.y
 
 # nombre d'exemples par set
 # (On compare egalement qu'il y a bien autant de Arg1 que de Arg2)
@@ -58,16 +61,21 @@ print(len(Arg1['test']), len(Arg2['test']), len(y['test']))
 
 # distribution des labels
 
-print("train :", Counter(y[relation + '_train']))
-print("dev :", Counter(y[relation + '_dev']))
-print("test :", Counter(y[relation + '_test']))
+print(relation, " train :", Counter(rel[relation + '_train']))
+print(relation, " train :", Counter(conn[relation + '_train']))
+
+print(relation, " dev :", Counter(rel[relation + '_dev']))
+print(relation, " dev :", Counter(conn[relation + '_dev']))
+
+print(relation, " test :", Counter(rel[relation + '_test']))
+print(relation, " test :", Counter(conn[relation + '_test']))
 
 
 # création d'une correspondance (goldclass <-> entier) à l'aide :
 # - d'une liste i2gold_class qui a un entier associe une class
 # - d'un dictionnaire gold_class2i qui a une classe associe un entier
 
-i2gold_class = list(set(y[relation + '_train']))
+i2gold_class = list(set(rel[relation + '_train']))
 gold_class2i = {gold_class: i for i, gold_class in enumerate(i2gold_class)}
 print(i2gold_class)
 print(gold_class2i)
@@ -75,17 +83,17 @@ print(gold_class2i)
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
 for s in [relation + '_test', relation + '_train', relation + '_dev']:
-    y[s] = [gold_class2i[gold_class] for gold_class in y[s]]
+    rel[s] = [gold_class2i[gold_class] for gold_class in rel[s]]
 
 
 # -------------------------- création du classifieur -------------------------------
 
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=25, size_of_batch=100,
                                  dropout=0.6, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
-                                 Arg1train=Arg1[relation + '_train'], Arg2train=Arg2[relation + '_train'],
-                                 ytrain=y[relation + '_train'],
-                                 Arg1dev=Arg1[relation + '_dev'], Arg2dev=Arg2[relation + '_dev'],
-                                 ydev=y[relation + '_dev'],
+                                 Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
+                                 ytrain=rel[relation + '_train'],
+                                 Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
+                                 ydev=rel[relation + '_dev'],
                                  i2goldclasses=i2gold_class)
 
 discourse_relation_mlp = discourse_relation_mlp.to(device)
@@ -98,16 +106,19 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1000,
+                                                                nb_epoch=1,
                                                                 patience=2,
                                                                 down_sampling=True,
                                                                 size_of_samples=3000,
                                                                 fixed_sampling=False)
 
 
-discourse_relation_mlp.evaluation("train", Arg1[relation + '_train'], Arg2[relation + '_train'], y[relation + '_train'])
-discourse_relation_mlp.evaluation("dev", Arg1[relation + '_dev'], Arg2[relation + '_dev'], y[relation + '_dev'])
-discourse_relation_mlp.evaluation("test", Arg1[relation + '_test'], Arg2[relation + '_test'], y[relation + '_test'])
+discourse_relation_mlp.evaluation("train", Arg1PDTB[relation + '_train'],
+                                  Arg2PDTB[relation + '_train'], rel[relation + '_train'])
+discourse_relation_mlp.evaluation("dev", Arg1PDTB[relation + '_dev'],
+                                  Arg2PDTB[relation + '_dev'], rel[relation + '_dev'])
+discourse_relation_mlp.evaluation("test", Arg1PDTB[relation + '_test'],
+                                  Arg2PDTB[relation + '_test'], rel[relation + '_test'])
 
 
 # courbe d'evolution de la loss
@@ -137,21 +148,21 @@ torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
 
 # --------------- prediction des relations de discours sur le SNLI -----------------------------
 # ordre P H:
-predict_NLI = discourse_relation_mlp.predict(Arg1['snli_dev'], Arg2['snli_dev'])
+predict_NLI = discourse_relation_mlp.predict(Arg1SNLI['dev'], Arg2SNLI['dev'])
 
 # ordre H P :
-predict_revNLI = discourse_relation_mlp.predict(Arg2['snli_dev'], Arg1['snli_dev'])
+predict_revNLI = discourse_relation_mlp.predict(Arg2SNLI['dev'], Arg1SNLI['dev'])
 
 
 # ------------- La repartition des relations de discours predites sur le SNLI --------------------
 
 repartition = Counter([(nli_class, i2gold_class[int(disc_rel)])
-                       for nli_class, disc_rel in zip(y['snli_dev'], predict_NLI.tolist())])
+                       for nli_class, disc_rel in zip(y['dev'], predict_NLI.tolist())])
 repartition_rev = Counter([(nli_class, i2gold_class[int(disc_rel)])
-                           for nli_class, disc_rel in zip(y['snli_dev'], predict_revNLI.tolist())])
+                           for nli_class, disc_rel in zip(y['dev'], predict_revNLI.tolist())])
 
 comb = Counter([(nli_class, (i2gold_class[int(disc_rel)], i2gold_class[int(disc_rel_rev)]))
-                for nli_class, disc_rel, disc_rel_rev in zip(y['snli_dev'], predict_NLI.tolist(), predict_revNLI.tolist())])
+                for nli_class, disc_rel, disc_rel_rev in zip(y['dev'], predict_NLI.tolist(), predict_revNLI.tolist())])
 
 i2nli = ['contradiction', 'entailment', 'neutral']
 
@@ -196,7 +207,7 @@ mat2 = mat/torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'), index=i2gold_class_squared)
 
 
-zipped = list(zip(Arg1['snli_dev'], Arg2['snli_dev'], y['snli_dev'],
+zipped = list(zip(Arg1SNLI['dev'], Arg2SNLI['dev'], y['dev'],
                   predict_NLI.tolist(), predict_revNLI.tolist()))
 shuffle(zipped)
 Args1, Args2, y, predict_NLI, predict_revNLI = zip(*zipped)

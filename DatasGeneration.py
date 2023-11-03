@@ -6,17 +6,17 @@ import pandas as pd
 
 
 # ---------------- Lecture et Partitionnement des fichiers ----------------------
-class FileReader:
+class PDTBReader:
 
     def __init__(self):
         """
         Arg1 contient les 1eres phrases, Arg2 les deuxiemes,
-        y les goldclass (ie les relations de discours qui nous interessent pour le PDTB,
-        et les classes NLI pour le SNLI)
+        y les goldclass (ie les relations de discours et les connecteurs qui nous interessent pour le PDTB)
         """
-        self.Arg1, self.Arg2, self.y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(lambda: [])
+        self.Arg1, self.Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
+        self.rel, self.conn = defaultdict(lambda: []), defaultdict(lambda: [])
 
-    def read_pdtb(self, split='CB', relation='Implicit'):
+    def read(self, split='CB', relation='Implicit'):
         pdtb = []
         # Chargement du fichier pdtb2
         reader = csv.DictReader(open('datas/pdtb2.csv/pdtb2.csv', 'r'))
@@ -31,8 +31,8 @@ class FileReader:
         on définit :
         - split_sec2set : a une section (0 a 24) associe son set (train, dev ou test)
         - split_set2sec : a un set (train, dev ou test) associe la liste des sections qui lui sont associées
-
         """
+
         if split == 'CB':
             split_set2sec = {"dev": [0, 1, 23, 24], "test": [21, 22], "train": list(range(2, 21))}
         if split == 'Lin':
@@ -47,12 +47,29 @@ class FileReader:
         for example in pdtb:
             section = int(example['Section'])
             if example['Relation'] == relation and section in split_sec2set:
+
                 gold_class = example['ConnHeadSemClass1'].split('.')[0]
+                # Conn1 dans le cas implicite, ConnHead dans le cas explicite
+                connective = example['Conn1'] if relation == 'Implicit' else example['ConnHead']
+
                 self.Arg1[relation + '_' + split_sec2set[section]].append(example['Arg1_RawText'])
                 self.Arg2[relation + '_' + split_sec2set[section]].append(example['Arg2_RawText'])
-                self.y[relation + '_' + split_sec2set[section]].append(gold_class)
+                self.rel[relation + '_' + split_sec2set[section]].append(gold_class)
 
-    def read_snli(self, part='dev'):
+                self.conn[relation + '_' + split_sec2set[section]].append(connective)
+
+
+class SNLIReader:
+
+    def __init__(self):
+        """
+        Arg1 contient les 1eres phrases, Arg2 les deuxiemes,
+        y les goldclass (ie les relations de discours qui nous interessent pour le PDTB,
+        et les classes NLI pour le SNLI)
+        """
+        self.Arg1, self.Arg2, self.y = defaultdict(lambda: []), defaultdict(lambda: []), defaultdict(lambda: [])
+
+    def read(self, part='dev'):
         """
         Lecture de la partie (train, test, ou dev) qui nous intéresse
         les colonnes qui nous intéressent :
@@ -66,6 +83,6 @@ class FileReader:
                 if isinstance(sent2, float):
                     print(sent1, '\n', sent2, '\n', gold, '\n')
                 else:
-                    self.Arg1['snli_' + part].append(sent1)
-                    self.Arg2['snli_' + part].append(sent2)
-                    self.y['snli_' + part].append(gold)
+                    self.Arg1[part].append(sent1)
+                    self.Arg2[part].append(sent2)
+                    self.y[part].append(gold)
