@@ -40,9 +40,9 @@ MAX_LENGTH = 128
 
 
 # ------------------------ Lecture des fichiers ------------------------
-relation = 'Implicit'
+relation = 'Explicit'
 pdtb = PDTBReader()
-pdtb.read(split='Ji', relation='Implicit')
+pdtb.read(split='CB', relation=relation)
 
 Arg1PDTB, Arg2PDTB, conn, rel = pdtb.Arg1, pdtb.Arg2, pdtb.conn, pdtb.rel
 
@@ -89,7 +89,7 @@ for s in [relation + '_test', relation + '_train', relation + '_dev']:
 # -------------------------- création du classifieur -------------------------------
 
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=25, size_of_batch=100,
-                                 dropout=0.6, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
+                                 dropout=0.4, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
                                  Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
                                  ytrain=rel[relation + '_train'],
                                  Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
