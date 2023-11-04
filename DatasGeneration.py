@@ -16,7 +16,7 @@ class PDTBReader:
         self.Arg1, self.Arg2 = defaultdict(lambda: []), defaultdict(lambda: [])
         self.rel, self.conn = defaultdict(lambda: []), defaultdict(lambda: [])
 
-    def read(self, split='CB', relation='Implicit'):
+    def read(self, split='CB', relation='Implicit', conn_filter=[], class_filter=[]):
         pdtb = []
         # Chargement du fichier pdtb2
         reader = csv.DictReader(open('datas/pdtb2.csv/pdtb2.csv', 'r'))
@@ -48,15 +48,16 @@ class PDTBReader:
             section = int(example['Section'])
             if example['Relation'] == relation and section in split_sec2set:
 
-                gold_class = example['ConnHeadSemClass1'].split('.')[0]
+                sem_class = example['ConnHeadSemClass1'].split('.')[0]
                 # Conn1 dans le cas implicite, ConnHead dans le cas explicite
                 connective = example['Conn1'] if relation == 'Implicit' else example['ConnHead']
 
-                self.Arg1[relation + '_' + split_sec2set[section]].append(example['Arg1_RawText'])
-                self.Arg2[relation + '_' + split_sec2set[section]].append(example['Arg2_RawText'])
-                self.rel[relation + '_' + split_sec2set[section]].append(gold_class)
+                if connective not in conn_filter and sem_class not in class_filter:
+                    self.Arg1[relation + '_' + split_sec2set[section]].append(example['Arg1_RawText'])
+                    self.Arg2[relation + '_' + split_sec2set[section]].append(example['Arg2_RawText'])
+                    self.rel[relation + '_' + split_sec2set[section]].append(sem_class)
 
-                self.conn[relation + '_' + split_sec2set[section]].append(connective)
+                    self.conn[relation + '_' + split_sec2set[section]].append(connective)
 
 
 class SNLIReader:
@@ -76,7 +77,7 @@ class SNLIReader:
             les 2 phrases (dans l'ordre)
             la goldclass
         """
-        file = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_"+part+".txt", sep="\t")
+        file = pd.read_csv("datas/snli_1.0/snli_1.0/snli_1.0_" + part + ".txt", sep="\t")
         file = file[['gold_label', 'sentence1', 'sentence2']]
         for gold, sent1, sent2 in zip(file['gold_label'], file['sentence1'], file['sentence2']):
             if gold != '-':

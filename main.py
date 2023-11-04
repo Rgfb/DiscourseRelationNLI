@@ -32,19 +32,31 @@ import torch.nn as nn
 import os
 import argparse
 
-
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(device)
 
 MAX_LENGTH = 128
 
-
 # ------------------------ Lecture des fichiers ------------------------
 relation = 'Explicit'
+semantic_rel = False
+
+conn_filter = ['previously', 'if then', 'finally', 'nevertheless', 'in turn', 'on the other hand', 'by contrast',
+               'nor', 'nonetheless', 'so that', 'as long as', 'otherwise', 'now that', 'therefore', 'ultimately',
+               'as soon as', 'as if', 'besides', 'in other words', 'rather', 'meantime', 'in particular', 'similarly',
+               'thereafter', 'thereby', 'earlier', 'in the end', 'except', 'overall', 'furthermore', 'consequently',
+               'in contrast', 'afterward', 'likewise', 'by comparison', 'specifically', 'additionally', 'as well',
+               'further', 'next', 'alternatively', 'much as', 'by then', 'in short', 'as though', 'simultaneously',
+               'neither nor', 'whereas', 'for', 'regardless', 'lest', 'conversely', 'hence', 'accordingly',
+               'on the contrary', 'in sum', 'either or', 'as an alternative', 'before and after', 'plus',
+               'And', 'when and if', 'insofar as', 'else', 'if and when']
+
 pdtb = PDTBReader()
-pdtb.read(split='CB', relation=relation)
+pdtb.read(split='CB', relation=relation, conn_filter=conn_filter)
 
 Arg1PDTB, Arg2PDTB, conn, rel = pdtb.Arg1, pdtb.Arg2, pdtb.conn, pdtb.rel
+gold = rel if semantic_rel else conn
+
 
 snli = SNLIReader()
 snli.read(part='dev')
@@ -70,34 +82,31 @@ print(relation, " dev :", Counter(conn[relation + '_dev']))
 print(relation, " test :", Counter(rel[relation + '_test']))
 print(relation, " test :", Counter(conn[relation + '_test']))
 
-
 # création d'une correspondance (goldclass <-> entier) à l'aide :
 # - d'une liste i2gold_class qui a un entier associe une class
 # - d'un dictionnaire gold_class2i qui a une classe associe un entier
 
-i2gold_class = list(set(rel[relation + '_train']))
+i2gold_class = list(set(gold[relation + '_train']))
 gold_class2i = {gold_class: i for i, gold_class in enumerate(i2gold_class)}
 print(i2gold_class)
 print(gold_class2i)
 
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
-for s in [relation + '_test', relation + '_train', relation + '_dev']:
-    rel[s] = [gold_class2i[gold_class] for gold_class in rel[s]]
-
+for s in ['test', 'train', 'dev']:
+    gold[relation + '_' + s] = [gold_class2i[gold_class] for gold_class in gold[s]]
 
 # -------------------------- création du classifieur -------------------------------
 
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=25, size_of_batch=100,
                                  dropout=0.4, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
                                  Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
-                                 ytrain=rel[relation + '_train'],
+                                 ytrain=gold[relation + '_train'],
                                  Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
-                                 ydev=rel[relation + '_dev'],
+                                 ydev=gold[relation + '_dev'],
                                  i2goldclasses=i2gold_class)
 
 discourse_relation_mlp = discourse_relation_mlp.to(device)
-
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
@@ -106,26 +115,25 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1,
+                                                                nb_epoch=100,
                                                                 patience=2,
                                                                 down_sampling=True,
-                                                                size_of_samples=3000,
+                                                                size_of_samples=100,
                                                                 fixed_sampling=False)
 
-
 discourse_relation_mlp.evaluation("train", Arg1PDTB[relation + '_train'],
-                                  Arg2PDTB[relation + '_train'], rel[relation + '_train'])
+                                  Arg2PDTB[relation + '_train'], gold[relation + '_train'])
 discourse_relation_mlp.evaluation("dev", Arg1PDTB[relation + '_dev'],
-                                  Arg2PDTB[relation + '_dev'], rel[relation + '_dev'])
+                                  Arg2PDTB[relation + '_dev'], gold[relation + '_dev'])
 discourse_relation_mlp.evaluation("test", Arg1PDTB[relation + '_test'],
-                                  Arg2PDTB[relation + '_test'], rel[relation + '_test'])
+                                  Arg2PDTB[relation + '_test'], gold[relation + '_test'])
 
 
 # courbe d'evolution de la loss
 
 def plot_loss():
     plt.figure()
-    abs = list(range(0, len(dev_losses)*discourse_relation_mlp.reg, discourse_relation_mlp.reg))
+    abs = list(range(0, len(dev_losses) * discourse_relation_mlp.reg, discourse_relation_mlp.reg))
     loss_fig = plt.figure("Figure 1")
     plt.plot(abs, dev_losses, label='loss on dev set')
     plt.plot(abs, train_losses, label='loss on train set')
@@ -137,7 +145,6 @@ def plot_loss():
 
 loss_fig = plot_loss()
 loss_fig.savefig(os.path.join(".", "Images", 'BertFineTunedModel.png'))
-
 
 # sauvegarde d'un modele
 torch.save(discourse_relation_mlp, 'BertFineTuned_model.pth')
@@ -152,7 +159,6 @@ predict_NLI = discourse_relation_mlp.predict(Arg1SNLI['dev'], Arg2SNLI['dev'])
 
 # ordre H P :
 predict_revNLI = discourse_relation_mlp.predict(Arg2SNLI['dev'], Arg1SNLI['dev'])
-
 
 # ------------- La repartition des relations de discours predites sur le SNLI --------------------
 
@@ -178,34 +184,31 @@ def save_plot(matrix, filename, index=i2gold_class, columns=i2nli):
 withoutnorm = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
 save_plot(withoutnorm.T, os.path.join(".", "Images", 'AvantNormalisation.png'))
 
-snlinorm = withoutnorm.T/torch.sum(withoutnorm, axis=1)
+snlinorm = withoutnorm.T / torch.sum(withoutnorm, axis=1)
 save_plot(snlinorm, os.path.join(".", "Images", 'ApresNormalisationSNLI.png'))
 
-pdtbnorm = withoutnorm/torch.sum(withoutnorm, axis=0)
+pdtbnorm = withoutnorm / torch.sum(withoutnorm, axis=0)
 save_plot(pdtbnorm.T, os.path.join(".", "Images", 'ApresNormalisationPDTB.png'))
-
 
 mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_class] for nli_class in i2nli])
 save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_rev.png'))
 
-mat1 = mat.T/torch.sum(mat, axis=1)
+mat1 = mat.T / torch.sum(mat, axis=1)
 save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_rev.png'))
 
-mat2 = mat/torch.sum(mat, axis=0)
+mat2 = mat / torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'))
-
 
 i2gold_class_squared = [(rel1, rel2) for rel1 in i2gold_class for rel2 in i2gold_class]
 
 mat = torch.tensor([[comb[(nli_class, rel_couple)] for rel_couple in i2gold_class_squared] for nli_class in i2nli])
 save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'), index=i2gold_class_squared)
 
-mat1 = mat.T/torch.sum(mat, axis=1)
+mat1 = mat.T / torch.sum(mat, axis=1)
 save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_comb.png'), index=i2gold_class_squared)
 
-mat2 = mat/torch.sum(mat, axis=0)
+mat2 = mat / torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'), index=i2gold_class_squared)
-
 
 zipped = list(zip(Arg1SNLI['dev'], Arg2SNLI['dev'], y['dev'],
                   predict_NLI.tolist(), predict_revNLI.tolist()))
