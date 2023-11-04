@@ -50,7 +50,10 @@ pdtb = PDTBReader()
 pdtb.read(split='CB', relation=relation, conn_filter=conn_filter)
 
 Arg1PDTB, Arg2PDTB, conn, rel = pdtb.Arg1, pdtb.Arg2, pdtb.conn, pdtb.rel
-gold = rel if semantic_rel else conn
+
+gold = {}
+for label in (rel if semantic_rel else conn):
+    gold[label] = rel[label] if semantic_rel else conn[label]
 
 
 snli = SNLIReader()
