@@ -59,11 +59,11 @@ Arg1SNLI, Arg2SNLI, y = snli.Arg1, snli.Arg2, snli.y
 
 # nombre d'exemples par set
 # (On compare egalement qu'il y a bien autant de Arg1 que de Arg2)
-"""
-print(len(Arg1['train']), len(Arg2['train']), len(y['train']))
-print(len(Arg1['dev']), len(Arg2['dev']), len(y['dev']))
-print(len(Arg1['test']), len(Arg2['test']), len(y['test']))
-"""
+
+print(len(Arg1PDTB[relation + '_train']), len(Arg2PDTB[relation + '_train']))
+print(len(Arg1PDTB[relation + '_dev']), len(Arg2PDTB[relation + '_dev']))
+print(len(Arg1PDTB[relation + '_test']), len(Arg2PDTB[relation + '_test']))
+
 
 # distribution des labels
 
@@ -88,7 +88,7 @@ print(gold_class2i)
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
 for s in ['test', 'train', 'dev']:
-    conn[relation + '_' + s] = [gold_class2i[gold_class] for gold_class in conn[s]]
+    rel[relation + '_' + s] = [gold_class2i[gold_class] for gold_class in rel[relation + '_' + s]]
 
 # -------------------------- création du classifieur -------------------------------
 

@@ -56,7 +56,6 @@ class PDTBReader:
                     self.Arg1[relation + '_' + split_sec2set[section]].append(example['Arg1_RawText'])
                     self.Arg2[relation + '_' + split_sec2set[section]].append(example['Arg2_RawText'])
                     self.rel[relation + '_' + split_sec2set[section]].append(sem_class)
-
                     self.conn[relation + '_' + split_sec2set[section]].append(connective)
 
 
