@@ -46,6 +46,7 @@ conn_filter = ['however', 'moreover', 'then', 'after', 'so', 'later', 'instead',
                'as a result', 'for example', 'once', 'also', 'for instance', 'though', 'unless', 'while',
                'but', 'if', 'in addition', 'thus', 'because', 'indeed', 'in fact']
 
+
 pdtb = PDTBReader()
 pdtb.read(split='CB', relation=relation, conn_filter=conn_filter)
 
@@ -92,7 +93,7 @@ for s in ['test', 'train', 'dev']:
 
 # -------------------------- création du classifieur -------------------------------
 
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=25, size_of_batch=100,
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
                                  dropout=0.4, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
                                  Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
                                  ytrain=conn[relation + '_train'],
@@ -109,8 +110,8 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=1,
-                                                                patience=2,
+                                                                nb_epoch=100,
+                                                                patience=1,
                                                                 down_sampling=True,
                                                                 size_of_samples=100,
                                                                 fixed_sampling=False)
