@@ -23,7 +23,7 @@ class BertMLP(nn.Module):
 
     def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, device, num_classes,
                  Arg1train, Arg2train, ytrain, Arg1dev, Arg2dev, ydev, size_of_input=768, num_tokens=128,
-                 loss=nn.NLLLoss(), model_name="bert-base-uncased"):
+                 loss=nn.NLLLoss(), model_name="bert-base-uncased", reg=1):
 
         super(BertMLP, self).__init__()
 
@@ -44,6 +44,7 @@ class BertMLP(nn.Module):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.bert_model = AutoModel.from_pretrained(model_name).to(device)
 
+        self.reg = reg
     def forward(self, tokens):
 
         vect_sentences = self.bert_model(**tokens.to(self.device))[0][:, 0, :].to(self.device)
@@ -79,7 +80,7 @@ class BertMLP(nn.Module):
 
         return arg1_sample, arg2_sample, y_sample
 
-    def training_step(self, optimizer, nb_epoch=2, patience=2, reg=1,
+    def training_step(self, optimizer, nb_epoch=2, patience=2,
                       down_sampling=True, fixed_sampling=False, size_of_samples=2000):
 
         """
@@ -148,7 +149,7 @@ class BertMLP(nn.Module):
                 optimizer.step()
 
             # calcul et print régulier de la loss sur le train et le dev
-            if epoch % reg == 0:
+            if epoch % self.reg == 0:
                 # mode "eval", pas de dropout ici
                 self.eval()
 
