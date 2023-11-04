@@ -95,9 +95,9 @@ for s in ['test', 'train', 'dev']:
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=25, size_of_batch=100,
                                  dropout=0.4, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
                                  Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
-                                 ytrain=conn[relation + '_train'],
+                                 ytrain=rel[relation + '_train'],
                                  Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
-                                 ydev=conn[relation + '_dev'],
+                                 ydev=rel[relation + '_dev'],
                                  i2goldclasses=i2gold_class)
 
 discourse_relation_mlp = discourse_relation_mlp.to(device)
@@ -109,7 +109,7 @@ optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=100,
+                                                                nb_epoch=1,
                                                                 patience=2,
                                                                 down_sampling=True,
                                                                 size_of_samples=100,
