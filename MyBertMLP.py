@@ -33,6 +33,8 @@ class BertMLP(nn.Module):
         self.loss = loss
         self.Arg1train, self.Arg2train, self.ytrain = Arg1train, Arg2train, ytrain
         self.Arg1dev, self.Arg2dev, self.ydev = Arg1dev, Arg2dev, ydev
+
+        self.num_classes = num_classes
         self.num_tokens = num_tokens
         self.size_of_batch = size_of_batch
 
