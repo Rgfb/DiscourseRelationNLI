@@ -52,7 +52,7 @@ class PDTBReader:
                 # Conn1 dans le cas implicite, ConnHead dans le cas explicite
                 connective = example['Conn1'] if relation == 'Implicit' else example['ConnHead']
 
-                if connective not in conn_filter and sem_class not in class_filter:
+                if connective in conn_filter and sem_class not in class_filter:
                     self.Arg1[relation + '_' + split_sec2set[section]].append(example['Arg1_RawText'])
                     self.Arg2[relation + '_' + split_sec2set[section]].append(example['Arg2_RawText'])
                     self.rel[relation + '_' + split_sec2set[section]].append(sem_class)

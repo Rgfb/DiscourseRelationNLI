@@ -41,15 +41,10 @@ MAX_LENGTH = 128
 relation = 'Explicit'
 semantic_rel = False
 
-conn_filter = ['previously', 'if then', 'finally', 'nevertheless', 'in turn', 'on the other hand', 'by contrast',
-               'nor', 'nonetheless', 'so that', 'as long as', 'otherwise', 'now that', 'therefore', 'ultimately',
-               'as soon as', 'as if', 'besides', 'in other words', 'rather', 'meantime', 'in particular', 'similarly',
-               'thereafter', 'thereby', 'earlier', 'in the end', 'except', 'overall', 'furthermore', 'consequently',
-               'in contrast', 'afterward', 'likewise', 'by comparison', 'specifically', 'additionally', 'as well',
-               'further', 'next', 'alternatively', 'much as', 'by then', 'in short', 'as though', 'simultaneously',
-               'neither nor', 'whereas', 'for', 'regardless', 'lest', 'conversely', 'hence', 'accordingly',
-               'on the contrary', 'in sum', 'either or', 'as an alternative', 'before and after', 'plus',
-               'And', 'when and if', 'insofar as', 'else', 'if and when']
+conn_filter = ['however', 'moreover', 'then', 'after', 'so', 'later', 'instead', 'yet', 'meanwhile',
+               'although', 'until', 'before', 'since', 'still', 'as', 'or', 'separately', 'when', 'and',
+               'as a result', 'for example', 'once', 'also', 'for instance', 'though', 'unless', 'while',
+               'but', 'if', 'in addition', 'thus', 'because', 'indeed', 'in fact']
 
 pdtb = PDTBReader()
 pdtb.read(split='CB', relation=relation, conn_filter=conn_filter)
