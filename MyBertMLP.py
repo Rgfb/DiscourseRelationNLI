@@ -22,7 +22,7 @@ un MLP qui prend en entrée une phrase tokenisée et renvoie la liste des probas
 class BertMLP(nn.Module):
 
     def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, device, num_classes,
-                 Arg1train, Arg2train, ytrain, Arg1dev, Arg2dev, ydev, i2goldclasses,
+                 Arg1train, Arg2train, ytrain, Arg1dev, Arg2dev, ydev,
                  size_of_input=768, num_tokens=128, reg=1, loss=nn.NLLLoss(),
                  model_name="bert-base-uncased"):
 
@@ -35,7 +35,6 @@ class BertMLP(nn.Module):
         self.Arg1dev, self.Arg2dev, self.ydev = Arg1dev, Arg2dev, ydev
         self.num_tokens = num_tokens
         self.size_of_batch = size_of_batch
-        self.i2goldclasses = i2goldclasses
 
         self.w1 = nn.Linear(size_of_input, first_hidden_layer_size).to(device)
         self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
@@ -70,7 +69,7 @@ class BertMLP(nn.Module):
         arg2_sample = []
         y_sample = []
 
-        for gold_class in range(len(self.i2goldclasses)):
+        for gold_class in range(self.num_classes):
             # shuffle pour ne pas prendre les mêmes exemples à chaque fois
             shuffle(examples[gold_class])
 
