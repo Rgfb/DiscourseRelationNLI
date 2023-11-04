@@ -80,7 +80,7 @@ print(relation, " test :", Counter(conn[relation + '_test']))
 # - d'une liste i2gold_class qui a un entier associe une class
 # - d'un dictionnaire gold_class2i qui a une classe associe un entier
 
-i2gold_class = list(set(conn[relation + '_train']))
+i2gold_class = list(set(rel[relation + '_train']))
 gold_class2i = {gold_class: i for i, gold_class in enumerate(i2gold_class)}
 print(i2gold_class)
 print(gold_class2i)
