@@ -80,7 +80,7 @@ print(relation, " test :", Counter(conn[relation + '_test']))
 # - d'une liste i2gold_class qui a un entier associe une class
 # - d'un dictionnaire gold_class2i qui a une classe associe un entier
 
-i2gold_class = list(set(rel[relation + '_train']))
+i2gold_class = list(set(conn[relation + '_train']))
 gold_class2i = {gold_class: i for i, gold_class in enumerate(i2gold_class)}
 print(i2gold_class)
 print(gold_class2i)
@@ -88,16 +88,16 @@ print(gold_class2i)
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
 for s in ['test', 'train', 'dev']:
-    rel[relation + '_' + s] = [gold_class2i[gold_class] for gold_class in rel[relation + '_' + s]]
+    conn[relation + '_' + s] = [gold_class2i[gold_class] for gold_class in conn[relation + '_' + s]]
 
 # -------------------------- création du classifieur -------------------------------
 
 discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=25, size_of_batch=100,
                                  dropout=0.4, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_class),
                                  Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
-                                 ytrain=rel[relation + '_train'],
+                                 ytrain=conn[relation + '_train'],
                                  Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
-                                 ydev=rel[relation + '_dev'],
+                                 ydev=conn[relation + '_dev'],
                                  i2goldclasses=i2gold_class)
 
 discourse_relation_mlp = discourse_relation_mlp.to(device)
