@@ -80,13 +80,16 @@ print(relation, " test :", Counter(conn[relation + '_test']))
 
 i2gold_conn = list(set(conn[relation + '_train']))
 gold_conn2i = {gold_class: i for i, gold_class in enumerate(i2gold_conn)}
-print(i2gold_conn)
-print(gold_conn2i)
+
+i2gold_rel = list(set(rel[relation + '_train']))
+gold_rel2i = {gold_class: i for i, gold_class in enumerate(i2gold_rel)}
+
 
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
 for s in ['test', 'train', 'dev']:
     conn[relation + '_' + s] = [gold_conn2i[gold_class] for gold_class in conn[relation + '_' + s]]
+    rel[relation + '_' + s] = [gold_conn2i[gold_class] for gold_class in rel[relation + '_' + s]]
 
 # -------------------------- création du classifieur -------------------------------
 
@@ -109,7 +112,7 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 nb_epoch=100,
                                                                 patience=2,
                                                                 down_sampling=True,
-                                                                size_of_samples=100,
+                                                                size_of_samples=500,
                                                                 fixed_sampling=False)
 
 discourse_relation_mlp.evaluation("train", Arg1PDTB[relation + '_train'],

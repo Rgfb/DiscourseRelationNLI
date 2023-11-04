@@ -22,13 +22,10 @@ un MLP qui prend en entrée une phrase tokenisée et renvoie la liste des probas
 class BertMLP(nn.Module):
 
     def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, device, num_classes,
-                 Arg1train, Arg2train, ytrain, Arg1dev, Arg2dev, ydev,
-                 size_of_input=768, num_tokens=128, reg=1, loss=nn.NLLLoss(),
-                 model_name="bert-base-uncased"):
+                 Arg1train, Arg2train, ytrain, Arg1dev, Arg2dev, ydev, size_of_input=768, num_tokens=128,
+                 loss=nn.NLLLoss(), model_name="bert-base-uncased"):
 
         super(BertMLP, self).__init__()
-
-        self.reg = reg
 
         self.loss = loss
         self.Arg1train, self.Arg2train, self.ytrain = Arg1train, Arg2train, ytrain
