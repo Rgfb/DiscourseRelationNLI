@@ -89,7 +89,7 @@ gold_rel2i = {gold_class: i for i, gold_class in enumerate(i2gold_rel)}
 # (pour pouvoir le tensoriser par la suite)
 for s in ['test', 'train', 'dev']:
     conn[relation + '_' + s] = [gold_conn2i[gold_class] for gold_class in conn[relation + '_' + s]]
-    rel[relation + '_' + s] = [gold_conn2i[gold_class] for gold_class in rel[relation + '_' + s]]
+    rel[relation + '_' + s] = [gold_rel2i[gold_class] for gold_class in rel[relation + '_' + s]]
 
 # -------------------------- création du classifieur -------------------------------
 
