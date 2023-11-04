@@ -103,16 +103,11 @@ explicit_connectives_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_lay
 discourse_relation_mlp = explicit_connectives_mlp.to(device)
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
-optim = torch.optim.Adam(discourse_relation_mlp.parameters(),
-                         lr=0.0001,
-                         weight_decay=0.0002)
+optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.0001, weight_decay=0.0002)
 
 # entrainement
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
-                                                                nb_epoch=100,
-                                                                patience=2,
-                                                                down_sampling=True,
-                                                                size_of_samples=500,
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=50, patience=2,
+                                                                down_sampling=True, size_of_samples=250,
                                                                 fixed_sampling=False)
 
 discourse_relation_mlp.evaluation("train", Arg1PDTB[relation + '_train'],
