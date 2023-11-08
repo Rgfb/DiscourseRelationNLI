@@ -39,6 +39,7 @@ MAX_LENGTH = 128
 
 # ------------------------ Lecture des fichiers ------------------------
 relation = 'Implicit'
+with_connectives = False
 semantic_rel = False
 
 conn_filter = ['however', 'moreover', 'then', 'after', 'so', 'later', 'instead', 'yet', 'meanwhile',
@@ -47,7 +48,7 @@ conn_filter = ['however', 'moreover', 'then', 'after', 'so', 'later', 'instead',
                'but', 'if', 'in addition', 'thus', 'because', 'indeed', 'in fact']
 
 pdtb = PDTBReader()
-pdtb.read(split='CB', relation=relation, conn_filter=conn_filter)
+pdtb.read(split='CB', relation=relation, with_connectives=with_connectives, conn_filter=conn_filter)
 
 Arg1PDTB, Arg2PDTB, conn, rel = pdtb.Arg1, pdtb.Arg2, pdtb.conn, pdtb.rel
 
@@ -87,7 +88,8 @@ gold_rel2i = {gold_class: i for i, gold_class in enumerate(i2gold_rel)}
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
 for s in ['test', 'train', 'dev']:
-    conn[relation + '_' + s] = [gold_conn2i[gold_class] for gold_class in conn[relation + '_' + s]]
+    if with_connectives:
+        conn[relation + '_' + s] = [gold_conn2i[gold_class] for gold_class in conn[relation + '_' + s]]
     rel[relation + '_' + s] = [gold_rel2i[gold_class] for gold_class in rel[relation + '_' + s]]
 
 # -------------------------- création du classifieur -------------------------------
