@@ -94,8 +94,8 @@ for s in ['test', 'train', 'dev']:
 
 # -------------------------- création du classifieur -------------------------------
 
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
-                                 dropout=0.4, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_rel),
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=100, second_hidden_layer_size=50, size_of_batch=100,
+                                 dropout=0.6, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_rel),
                                  Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
                                  ytrain=rel[relation + '_train'],
                                  Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
