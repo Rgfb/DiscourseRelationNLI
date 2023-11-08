@@ -48,7 +48,16 @@ class PDTBReader:
             section = int(example['Section'])
             if example['Relation'] == relation and section in split_sec2set:
 
-                sem_class = example['ConnHeadSemClass1'].split('.')[0]
+                if 'Expansion' in example['ConnHeadSemClass1'].split('.'):
+                    if 'Restatement' in example['ConnHeadSemClass1'].split('.'):
+                        sem_class = 'Expansion.Restatement'
+                    elif 'Conjunction' in example['ConnHeadSemClass1'].split('.'):
+                        sem_class = 'Expansion.Conjunction'
+                    else:
+                        sem_class = 'Expansion.Other'
+                else:
+                    sem_class = example['ConnHeadSemClass1'].split('.')[0]
+
                 # Conn1 dans le cas implicite, ConnHead dans le cas explicite
                 connective = example['Conn1'] if relation == 'Implicit' else example['ConnHead']
 
