@@ -104,11 +104,11 @@ discourse_relation_mlp = BertMLP(first_hidden_layer_size=100, second_hidden_laye
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
-optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.00005, weight_decay=0.0005)
+optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.00005, weight_decay=0.001)
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=50, patience=2,
-                                                                down_sampling=True, size_of_samples=1500,
+                                                                down_sampling=True, size_of_samples=1000,
                                                                 fixed_sampling=False)
 
 discourse_relation_mlp.evaluation("train", Arg1PDTB[relation + '_train'],
