@@ -94,8 +94,8 @@ for s in ['test', 'train', 'dev']:
 
 # -------------------------- création du classifieur -------------------------------
 
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=100, second_hidden_layer_size=50, size_of_batch=100,
-                                 dropout=0.6, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_rel),
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
+                                 dropout=0.5, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_rel),
                                  Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
                                  ytrain=rel[relation + '_train'],
                                  Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
@@ -104,11 +104,11 @@ discourse_relation_mlp = BertMLP(first_hidden_layer_size=100, second_hidden_laye
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
-optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.00005, weight_decay=0.001)
+optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.00005, weight_decay=0.0007)
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=50, patience=2,
-                                                                down_sampling=True, size_of_samples=1000,
+                                                                down_sampling=True, size_of_samples=900,
                                                                 fixed_sampling=False)
 
 discourse_relation_mlp.evaluation("train", Arg1PDTB[relation + '_train'],
