@@ -38,7 +38,7 @@ print(device)
 MAX_LENGTH = 128
 
 # ------------------------ Lecture des fichiers ------------------------
-relation = 'Explicit'
+relation = 'Implicit'
 semantic_rel = False
 
 conn_filter = ['however', 'moreover', 'then', 'after', 'so', 'later', 'instead', 'yet', 'meanwhile',
@@ -84,7 +84,6 @@ gold_conn2i = {gold_class: i for i, gold_class in enumerate(i2gold_conn)}
 i2gold_rel = list(set(rel[relation + '_train']))
 gold_rel2i = {gold_class: i for i, gold_class in enumerate(i2gold_rel)}
 
-
 # on remplace les gold_class par les entiers associés dans y
 # (pour pouvoir le tensoriser par la suite)
 for s in ['test', 'train', 'dev']:
@@ -93,14 +92,14 @@ for s in ['test', 'train', 'dev']:
 
 # -------------------------- création du classifieur -------------------------------
 
-explicit_connectives_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
-                                   dropout=0.4, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_conn),
-                                   Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
-                                   ytrain=conn[relation + '_train'],
-                                   Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
-                                   ydev=conn[relation + '_dev'])
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
+                                 dropout=0.4, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_rel),
+                                 Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
+                                 ytrain=rel[relation + '_train'],
+                                 Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
+                                 ydev=rel[relation + '_dev'])
 
-discourse_relation_mlp = explicit_connectives_mlp.to(device)
+discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.00005, weight_decay=0.0005)
@@ -111,11 +110,11 @@ dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
                                                                 fixed_sampling=False)
 
 discourse_relation_mlp.evaluation("train", Arg1PDTB[relation + '_train'],
-                                  Arg2PDTB[relation + '_train'], conn[relation + '_train'])
+                                  Arg2PDTB[relation + '_train'], rel[relation + '_train'])
 discourse_relation_mlp.evaluation("dev", Arg1PDTB[relation + '_dev'],
-                                  Arg2PDTB[relation + '_dev'], conn[relation + '_dev'])
+                                  Arg2PDTB[relation + '_dev'], rel[relation + '_dev'])
 discourse_relation_mlp.evaluation("test", Arg1PDTB[relation + '_test'],
-                                  Arg2PDTB[relation + '_test'], conn[relation + '_test'])
+                                  Arg2PDTB[relation + '_test'], rel[relation + '_test'])
 
 
 # courbe d'evolution de la loss
@@ -151,18 +150,18 @@ predict_revNLI = discourse_relation_mlp.predict(Arg2SNLI['dev'], Arg1SNLI['dev']
 
 # ------------- La repartition des relations de discours predites sur le SNLI --------------------
 
-repartition = Counter([(nli_class, i2gold_conn[int(disc_rel)])
+repartition = Counter([(nli_class, i2gold_rel[int(disc_rel)])
                        for nli_class, disc_rel in zip(y['dev'], predict_NLI.tolist())])
-repartition_rev = Counter([(nli_class, i2gold_conn[int(disc_rel)])
+repartition_rev = Counter([(nli_class, i2gold_rel[int(disc_rel)])
                            for nli_class, disc_rel in zip(y['dev'], predict_revNLI.tolist())])
 
-comb = Counter([(nli_class, (i2gold_conn[int(disc_rel)], i2gold_conn[int(disc_rel_rev)]))
+comb = Counter([(nli_class, (i2gold_rel[int(disc_rel)], i2gold_rel[int(disc_rel_rev)]))
                 for nli_class, disc_rel, disc_rel_rev in zip(y['dev'], predict_NLI.tolist(), predict_revNLI.tolist())])
 
 i2nli = ['contradiction', 'entailment', 'neutral']
 
 
-def save_plot(matrix, filename, index=i2gold_conn, columns=i2nli):
+def save_plot(matrix, filename, index=i2gold_rel, columns=i2nli):
     plt.figure()
     df_cm = DataFrame(matrix, index=index, columns=columns)
     ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".2f")
@@ -170,7 +169,7 @@ def save_plot(matrix, filename, index=i2gold_conn, columns=i2nli):
     heatmap.savefig(filename, bbox_inches='tight')
 
 
-withoutnorm = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_conn] for nli_class in i2nli])
+withoutnorm = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_rel] for nli_class in i2nli])
 save_plot(withoutnorm.T, os.path.join(".", "Images", 'AvantNormalisation.png'))
 
 snlinorm = withoutnorm.T / torch.sum(withoutnorm, axis=1)
@@ -179,7 +178,7 @@ save_plot(snlinorm, os.path.join(".", "Images", 'ApresNormalisationSNLI.png'))
 pdtbnorm = withoutnorm / torch.sum(withoutnorm, axis=0)
 save_plot(pdtbnorm.T, os.path.join(".", "Images", 'ApresNormalisationPDTB.png'))
 
-mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_conn] for nli_class in i2nli])
+mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_rel] for nli_class in i2nli])
 save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_rev.png'))
 
 mat1 = mat.T / torch.sum(mat, axis=1)
@@ -188,7 +187,7 @@ save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_rev.png'))
 mat2 = mat / torch.sum(mat, axis=0)
 save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'))
 
-i2gold_class_squared = [(rel1, rel2) for rel1 in i2gold_conn for rel2 in i2gold_conn]
+i2gold_class_squared = [(rel1, rel2) for rel1 in i2gold_rel for rel2 in i2gold_rel]
 
 mat = torch.tensor([[comb[(nli_class, rel_couple)] for rel_couple in i2gold_class_squared] for nli_class in i2nli])
 save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'), index=i2gold_class_squared)
@@ -209,8 +208,8 @@ with open('examples.txt', 'w') as f:
     for arg1, arg2, nli_class, rel, rel_rev in zip(Args1, Args2, y,
                                                    predict_NLI,
                                                    predict_revNLI):
-        rel = i2gold_conn[int(rel)]
-        rel_rev = i2gold_conn[int(rel_rev)]
+        rel = i2gold_rel[int(rel)]
+        rel_rev = i2gold_rel[int(rel_rev)]
         if compteur[rel + rel_rev + nli_class] == 5:
             pass
         else:
