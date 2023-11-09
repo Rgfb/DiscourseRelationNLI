@@ -94,7 +94,7 @@ for s in ['test', 'train', 'dev']:
 
 # -------------------------- création du classifieur -------------------------------
 
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer_size=50, size_of_batch=100,
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=75, second_hidden_layer_size=50, size_of_batch=100,
                                  dropout=0.5, loss=nn.NLLLoss(), device=device, num_classes=len(i2gold_rel),
                                  Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
                                  ytrain=rel[relation + '_train'],
@@ -104,7 +104,7 @@ discourse_relation_mlp = BertMLP(first_hidden_layer_size=50, second_hidden_layer
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
 # choix de l'optimizer (SGD, Adam, Autre ?)
-optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.00005, weight_decay=0.0007)
+optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.000025, weight_decay=0.0007)
 
 # entrainement
 dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=50, patience=2,
