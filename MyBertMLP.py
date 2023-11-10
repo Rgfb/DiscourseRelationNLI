@@ -1,6 +1,7 @@
 # --------------------- Installations et Imports -------------------------
 import os
 
+from matplotlib import pyplot as plt
 from pandas import DataFrame
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, accuracy_score
 
@@ -218,7 +219,7 @@ class BertMLP(nn.Module):
         print(data_set+' :')
 
         print(confusion_matrix(y_true, y_pred))
-
+        plt.figure()
         df_cm = DataFrame(matrix, index=self.classes, columns=self.classes)
         ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".2f")
         heatmap = ax.get_figure()
