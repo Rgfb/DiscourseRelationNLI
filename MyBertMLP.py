@@ -13,7 +13,6 @@ from collections import defaultdict
 from transformers import AutoModel, AutoTokenizer
 import seaborn as sn
 
-
 # ----------------------- Le Modèle ---------------------------------
 
 """
@@ -51,6 +50,7 @@ class BertMLP(nn.Module):
         self.bert_model = AutoModel.from_pretrained(model_name).to(device)
 
         self.reg = reg
+
     def forward(self, tokens):
 
         vect_sentences = self.bert_model(**tokens.to(self.device))[0][:, 0, :].to(self.device)
@@ -134,8 +134,8 @@ class BertMLP(nn.Module):
             while i < len(y_sample):
                 # arg1 (resp arg2) : les tokens des premieres (resp deuxiemes) phrases tokenisees
                 # gold_classes : les goldclass associées
-                arg1, arg2 = arg1_sample[i: i+self.size_of_batch], arg2_sample[i: i+self.size_of_batch]
-                gold_classes = torch.LongTensor(y_sample[i: i+self.size_of_batch]).to(self.device)
+                arg1, arg2 = arg1_sample[i: i + self.size_of_batch], arg2_sample[i: i + self.size_of_batch]
+                gold_classes = torch.LongTensor(y_sample[i: i + self.size_of_batch]).to(self.device)
 
                 tokens = self.tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
                                         return_tensors="pt", padding='max_length')
@@ -172,8 +172,9 @@ class BertMLP(nn.Module):
                     train_losses.append(loss_on_train)
 
                 # early stopping
-                if (patience < len(dev_losses) and all([dev_losses[-i-1] < dev_losses[-i] and
-                                                        train_losses[-i] < train_losses[-i-1] for i in range(1, patience + 1)])):
+                if (patience < len(dev_losses) and
+                        all(dev_losses[-i - 1] < dev_losses[-i] for i in range(1, patience + 1)) and
+                        any(train_losses[-i] < train_losses[-i - 1] for i in range(1, patience + 1))):
                     print(f"Epoch {epoch}\nloss on train is {loss_on_train}\nloss on dev is {loss_on_dev}\n")
                     print("EARLY STOPPING")
                     return dev_losses, train_losses
@@ -187,14 +188,15 @@ class BertMLP(nn.Module):
         i, loss, nb_batch = 0, 0, 0
         with torch.no_grad():
             while i < len(arg1):
-                arg1_sample, arg2_sample = arg1[i: i+self.size_of_batch], arg2[i: i+self.size_of_batch]
+                arg1_sample, arg2_sample = arg1[i: i + self.size_of_batch], arg2[i: i + self.size_of_batch]
                 batch_tokens = self.tokenizer(arg1_sample, arg2_sample, truncation=True, max_length=self.num_tokens,
                                               return_tensors="pt", padding='max_length')
                 log_probs = self.forward(batch_tokens.to(self.device))
-                loss += self.loss(log_probs, torch.LongTensor(y[i: i+self.size_of_batch]).to(self.device)).cpu().detach().numpy()
+                loss += self.loss(log_probs,
+                                  torch.LongTensor(y[i: i + self.size_of_batch]).to(self.device)).cpu().detach().numpy()
                 i += self.size_of_batch
                 nb_batch += 1
-        return loss/nb_batch
+        return loss / nb_batch
 
     def predict(self, sentences1, sentences2):
         self.eval()
@@ -202,7 +204,7 @@ class BertMLP(nn.Module):
         predictions = torch.tensor([])
         with torch.no_grad():
             while i < len(sentences1):
-                arg1, arg2 = sentences1[i: i+self.size_of_batch], sentences2[i: i+self.size_of_batch]
+                arg1, arg2 = sentences1[i: i + self.size_of_batch], sentences2[i: i + self.size_of_batch]
                 batch_tokens = self.tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
                                               return_tensors="pt", padding='max_length')
                 log_probs = self.forward(batch_tokens.to(self.device))
@@ -216,14 +218,14 @@ class BertMLP(nn.Module):
         y_pred = self.predict(arg1, arg2).cpu()
         matrix = confusion_matrix(y_true, y_pred)
 
-        print(data_set+' :')
+        print(data_set + ' :')
 
         print(confusion_matrix(y_true, y_pred))
         plt.figure()
         df_cm = DataFrame(matrix, index=self.classes, columns=self.classes)
         ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".2f")
         heatmap = ax.get_figure()
-        heatmap.savefig(os.path.join(".", "Images", 'ConfusionMatrix'+data_set), bbox_inches='tight')
+        heatmap.savefig(os.path.join(".", "Images", 'ConfusionMatrix' + data_set), bbox_inches='tight')
 
         print("f1 macro : ", f1_score(y_true, y_pred, average='macro'))
         print("precision macro : ", precision_score(y_true, y_pred, average='macro'))
