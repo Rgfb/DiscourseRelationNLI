@@ -1,12 +1,14 @@
 # --------------------- Installations et Imports -------------------------
+from pandas import DataFrame
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, accuracy_score
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from random import shuffle
-from collections import Counter, defaultdict
+from collections import defaultdict
 from transformers import AutoModel, AutoTokenizer
+import seaborn as sn
 
 
 # ----------------------- Le Modèle ---------------------------------
@@ -20,7 +22,7 @@ un MLP qui prend en entrée une phrase tokenisée et renvoie la liste des probas
 
 class BertMLP(nn.Module):
 
-    def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, device, num_classes,
+    def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, device, classes,
                  Arg1train, Arg2train, ytrain, Arg1dev, Arg2dev, ydev, size_of_input=768, num_tokens=128,
                  loss=nn.NLLLoss(), model_name="bert-base-uncased", reg=1):
 
@@ -30,13 +32,15 @@ class BertMLP(nn.Module):
         self.Arg1train, self.Arg2train, self.ytrain = Arg1train, Arg2train, ytrain
         self.Arg1dev, self.Arg2dev, self.ydev = Arg1dev, Arg2dev, ydev
 
-        self.num_classes = num_classes
+        self.classes = classes
+        self.num_classes = len(classes)
+
         self.num_tokens = num_tokens
         self.size_of_batch = size_of_batch
 
         self.w1 = nn.Linear(size_of_input, first_hidden_layer_size).to(device)
         self.w2 = nn.Linear(first_hidden_layer_size, second_hidden_layer_size)
-        self.w3 = nn.Linear(second_hidden_layer_size, num_classes).to(device)
+        self.w3 = nn.Linear(second_hidden_layer_size, self.num_classes).to(device)
 
         self.dropout = nn.Dropout(dropout).to(device)
         self.device = device
@@ -207,9 +211,17 @@ class BertMLP(nn.Module):
 
         y_true = torch.tensor(y).cpu()
         y_pred = self.predict(arg1, arg2).cpu()
+        matrix = confusion_matrix(y_true, y_pred)
 
         print(data_set+' :')
+
         print(confusion_matrix(y_true, y_pred))
+
+        df_cm = DataFrame(matrix, index=self.classes, columns=self.classes)
+        ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".2f")
+        heatmap = ax.get_figure()
+        heatmap.savefig('ConfusionMatrix'+data_set, bbox_inches='tight')
+
         print("f1 macro : ", f1_score(y_true, y_pred, average='macro'))
         print("precision macro : ", precision_score(y_true, y_pred, average='macro'))
         print("exactitude : ", accuracy_score(y_true, y_pred))
