@@ -75,14 +75,14 @@ print(len(Arg1PDTB[relation + '_test']), len(Arg2PDTB[relation + '_test']))
 
 # distribution des labels
 
+"""
 print(relation, " train :", Counter(rel[relation + '_train']))
 print(relation, " train :", Counter(conn[relation + '_train']))
-
 print(relation, " dev :", Counter(rel[relation + '_dev']))
 print(relation, " dev :", Counter(conn[relation + '_dev']))
-
 print(relation, " test :", Counter(rel[relation + '_test']))
 print(relation, " test :", Counter(conn[relation + '_test']))
+"""
 
 # création d'une correspondance (goldclass <-> entier) à l'aide :
 # - d'une liste i2gold_class qui a un entier associe une class
@@ -116,7 +116,7 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.000025, weight_decay=0.0007)
 
 # entrainement
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=1, patience=2,
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=50, patience=2,
                                                                 down_sampling=True, size_of_samples=1200,
                                                                 fixed_sampling=False)
 
