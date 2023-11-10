@@ -4,7 +4,6 @@ from sklearn.metrics import confusion_matrix, f1_score, precision_score, accurac
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 from random import shuffle
 from collections import Counter, defaultdict
 from transformers import AutoModel, AutoTokenizer

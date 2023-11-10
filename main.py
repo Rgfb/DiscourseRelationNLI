@@ -19,10 +19,8 @@ from random import shuffle
 from MyBertMLP import BertMLP
 from DatasGeneration import PDTBReader, SNLIReader
 
-import csv
 from collections import Counter, defaultdict
 
-import pandas as pd
 from pandas import DataFrame
 import seaborn as sn
 import matplotlib.pyplot as plt
@@ -36,6 +34,17 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(device)
 
 MAX_LENGTH = 128
+
+# ------------------------ Fonctions annexes ---------------------------
+
+
+def save_plot(matrix, filename, index, columns):
+    plt.figure()
+    df_cm = DataFrame(matrix, index=index, columns=columns)
+    ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".2f")
+    heatmap = ax.get_figure()
+    heatmap.savefig(filename, bbox_inches='tight')
+
 
 # ------------------------ Lecture des fichiers ------------------------
 relation = 'Implicit'
@@ -107,7 +116,7 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.000025, weight_decay=0.0007)
 
 # entrainement
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=50, patience=2,
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=1, patience=2,
                                                                 down_sampling=True, size_of_samples=900,
                                                                 fixed_sampling=False)
 
@@ -121,19 +130,14 @@ discourse_relation_mlp.evaluation("test", Arg1PDTB[relation + '_test'],
 
 # courbe d'evolution de la loss
 
-def plot_loss():
-    plt.figure()
-    abs = list(range(0, len(dev_losses) * discourse_relation_mlp.reg, discourse_relation_mlp.reg))
-    loss_fig = plt.figure("Figure 1")
-    plt.plot(abs, dev_losses, label='loss on dev set')
-    plt.plot(abs, train_losses, label='loss on train set')
-    plt.ylabel('loss')
-    plt.xlabel('nombre d\'époques')
-    plt.legend()
-    return loss_fig
-
-
-loss_fig = plot_loss()
+plt.figure()
+abs = list(range(0, len(dev_losses) * discourse_relation_mlp.reg, discourse_relation_mlp.reg))
+loss_fig = plt.figure("Figure 1")
+plt.plot(abs, dev_losses, label='loss on dev set')
+plt.plot(abs, train_losses, label='loss on train set')
+plt.ylabel('loss')
+plt.xlabel('nombre d\'époques')
+plt.legend()
 loss_fig.savefig(os.path.join(".", "Images", 'BertFineTunedModel.png'))
 
 # sauvegarde d'un modele
@@ -163,42 +167,37 @@ comb = Counter([(nli_class, (i2gold_rel[int(disc_rel)], i2gold_rel[int(disc_rel_
 i2nli = ['contradiction', 'entailment', 'neutral']
 
 
-def save_plot(matrix, filename, index=i2gold_rel, columns=i2nli):
-    plt.figure()
-    df_cm = DataFrame(matrix, index=index, columns=columns)
-    ax = sn.heatmap(df_cm, cmap='Blues', annot=True, fmt=".2f")
-    heatmap = ax.get_figure()
-    heatmap.savefig(filename, bbox_inches='tight')
-
-
 withoutnorm = torch.tensor([[repartition[(nli_class, rel)] for rel in i2gold_rel] for nli_class in i2nli])
-save_plot(withoutnorm.T, os.path.join(".", "Images", 'AvantNormalisation.png'))
+save_plot(withoutnorm.T, os.path.join(".", "Images", 'AvantNormalisation.png'), index=i2gold_rel, columns=i2nli)
 
 snlinorm = withoutnorm.T / torch.sum(withoutnorm, axis=1)
-save_plot(snlinorm, os.path.join(".", "Images", 'ApresNormalisationSNLI.png'))
+save_plot(snlinorm, os.path.join(".", "Images", 'ApresNormalisationSNLI.png'), index=i2gold_rel, columns=i2nli)
 
 pdtbnorm = withoutnorm / torch.sum(withoutnorm, axis=0)
-save_plot(pdtbnorm.T, os.path.join(".", "Images", 'ApresNormalisationPDTB.png'))
+save_plot(pdtbnorm.T, os.path.join(".", "Images", 'ApresNormalisationPDTB.png'), index=i2gold_rel, columns=i2nli)
 
 mat = torch.tensor([[repartition_rev[(nli_class, rel)] for rel in i2gold_rel] for nli_class in i2nli])
-save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_rev.png'))
+save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_rev.png'), index=i2gold_rel, columns=i2nli)
 
 mat1 = mat.T / torch.sum(mat, axis=1)
-save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_rev.png'))
+save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_rev.png'), index=i2gold_rel, columns=i2nli)
 
 mat2 = mat / torch.sum(mat, axis=0)
-save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'))
+save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_rev.png'), index=i2gold_rel, columns=i2nli)
 
 i2gold_class_squared = [(rel1, rel2) for rel1 in i2gold_rel for rel2 in i2gold_rel]
 
 mat = torch.tensor([[comb[(nli_class, rel_couple)] for rel_couple in i2gold_class_squared] for nli_class in i2nli])
-save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'), index=i2gold_class_squared)
+save_plot(mat.T, os.path.join(".", "Images", 'AvantNormalisation_comb.png'),
+          index=i2gold_class_squared, columns=i2nli)
 
 mat1 = mat.T / torch.sum(mat, axis=1)
-save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_comb.png'), index=i2gold_class_squared)
+save_plot(mat1, os.path.join(".", "Images", 'ApresNormalisationSNLI_comb.png'),
+          index=i2gold_class_squared, columns=i2nli)
 
 mat2 = mat / torch.sum(mat, axis=0)
-save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'), index=i2gold_class_squared)
+save_plot(mat2.T, os.path.join(".", "Images", 'ApresNormalisationPDTB_comb.png'),
+          index=i2gold_class_squared, columns=i2nli)
 
 zipped = list(zip(Arg1SNLI['dev'], Arg2SNLI['dev'], y['dev'],
                   predict_NLI.tolist(), predict_revNLI.tolist()))
