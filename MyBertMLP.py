@@ -25,14 +25,11 @@ un MLP qui prend en entrée une phrase tokenisée et renvoie la liste des probas
 class BertMLP(nn.Module):
 
     def __init__(self, first_hidden_layer_size, second_hidden_layer_size, size_of_batch, dropout, device, classes,
-                 Arg1train, Arg2train, ytrain, Arg1dev, Arg2dev, ydev, size_of_input=768, num_tokens=128,
-                 loss=nn.NLLLoss(), model_name="bert-base-uncased", reg=1):
+                 size_of_input=768, num_tokens=128, loss=nn.NLLLoss(), model_name="bert-base-uncased", reg=1):
 
         super(BertMLP, self).__init__()
 
         self.loss = loss
-        self.Arg1train, self.Arg2train, self.ytrain = Arg1train, Arg2train, ytrain
-        self.Arg1dev, self.Arg2dev, self.ydev = Arg1dev, Arg2dev, ydev
 
         self.classes = classes
         self.num_classes = len(classes)
@@ -86,8 +83,12 @@ class BertMLP(nn.Module):
 
         return arg1_sample, arg2_sample, y_sample
 
-    def training_step(self, optimizer, nb_epoch=2, patience=2,
-                      down_sampling=True, fixed_sampling=False, size_of_samples=2000):
+    def training_step(self, optimizer,
+                      Arg1train, Arg2train, ytrain,
+                      Arg1dev, Arg2dev, ydev,
+                      nb_epoch=2, patience=2,
+                      down_sampling=True, fixed_sampling=False,
+                      size_of_samples=2000):
 
         """
         l'entrainement du MLP
@@ -104,7 +105,7 @@ class BertMLP(nn.Module):
         # est-ce qu'on veut faire du down sampling ou non
         if down_sampling:
             examples = defaultdict(lambda: [])
-            for arg1, arg2, label in zip(self.Arg1train, self.Arg2train, self.ytrain):
+            for arg1, arg2, label in zip(Arg1train, Arg2train, ytrain):
                 examples[label].append((arg1, arg2))
 
             if fixed_sampling:
@@ -112,7 +113,7 @@ class BertMLP(nn.Module):
                 arg1_sample, arg2_sample, y_sample = self.sampling(examples, size_of_samples)
 
         else:
-            arg1_sample, arg2_sample, y_sample = self.Arg1train, self.Arg2train, self.ytrain
+            arg1_sample, arg2_sample, y_sample = Arg1train, Arg2train, ytrain
 
         for epoch in range(nb_epoch):
 
@@ -137,8 +138,12 @@ class BertMLP(nn.Module):
                 arg1, arg2 = arg1_sample[i: i + self.size_of_batch], arg2_sample[i: i + self.size_of_batch]
                 gold_classes = torch.LongTensor(y_sample[i: i + self.size_of_batch]).to(self.device)
 
-                tokens = self.tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
-                                        return_tensors="pt", padding='max_length')
+                tokens = self.tokenizer(arg1,
+                                        arg2,
+                                        truncation=True,
+                                        max_length=self.num_tokens,
+                                        return_tensors="pt",
+                                        padding='max_length')
 
                 i += self.size_of_batch
 
@@ -164,11 +169,11 @@ class BertMLP(nn.Module):
                 with torch.no_grad():
 
                     # evaluation sur le dev
-                    loss_on_dev = self.computing_loss(self.Arg1dev, self.Arg2dev, self.ydev)
+                    loss_on_dev = self.computing_loss(Arg1dev, Arg2dev, ydev)
                     dev_losses.append(loss_on_dev)
 
                     # evaluation sur le train
-                    loss_on_train = self.computing_loss(self.Arg1train, self.Arg2train, self.ytrain)
+                    loss_on_train = self.computing_loss(Arg1train, Arg2train, ytrain)
                     train_losses.append(loss_on_train)
 
                 # early stopping
@@ -189,8 +194,14 @@ class BertMLP(nn.Module):
         with torch.no_grad():
             while i < len(arg1):
                 arg1_sample, arg2_sample = arg1[i: i + self.size_of_batch], arg2[i: i + self.size_of_batch]
-                batch_tokens = self.tokenizer(arg1_sample, arg2_sample, truncation=True, max_length=self.num_tokens,
-                                              return_tensors="pt", padding='max_length')
+
+                batch_tokens = self.tokenizer(arg1_sample,
+                                              arg2_sample,
+                                              truncation=True,
+                                              max_length=self.num_tokens,
+                                              return_tensors="pt",
+                                              padding='max_length')
+
                 log_probs = self.forward(batch_tokens.to(self.device))
                 loss += self.loss(log_probs,
                                   torch.LongTensor(y[i: i + self.size_of_batch]).to(self.device)).cpu().detach().numpy()
@@ -205,8 +216,14 @@ class BertMLP(nn.Module):
         with torch.no_grad():
             while i < len(sentences1):
                 arg1, arg2 = sentences1[i: i + self.size_of_batch], sentences2[i: i + self.size_of_batch]
-                batch_tokens = self.tokenizer(arg1, arg2, truncation=True, max_length=self.num_tokens,
-                                              return_tensors="pt", padding='max_length')
+
+                batch_tokens = self.tokenizer(arg1,
+                                              arg2,
+                                              truncation=True,
+                                              max_length=self.num_tokens,
+                                              return_tensors="pt",
+                                              padding='max_length')
+
                 log_probs = self.forward(batch_tokens.to(self.device))
                 i += self.size_of_batch
                 predictions = torch.cat((predictions.to(self.device), torch.argmax(log_probs, dim=1).to(self.device)))
@@ -231,3 +248,9 @@ class BertMLP(nn.Module):
         print("precision macro : ", precision_score(y_true, y_pred, average='macro'))
         print("exactitude : ", accuracy_score(y_true, y_pred))
         print()
+
+    def freeze_bert(self):
+        self.bert_model.requires_grad_(False)
+
+    def unfreeze_bert(self):
+        self.bert_model.requires_grad_(True)

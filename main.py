@@ -103,12 +103,13 @@ for s in ['test', 'train', 'dev']:
 
 # -------------------------- création du classifieur -------------------------------
 
-discourse_relation_mlp = BertMLP(first_hidden_layer_size=75, second_hidden_layer_size=50, size_of_batch=100,
-                                 dropout=0.5, loss=nn.NLLLoss(), device=device, classes=i2gold_rel,
-                                 Arg1train=Arg1PDTB[relation + '_train'], Arg2train=Arg2PDTB[relation + '_train'],
-                                 ytrain=rel[relation + '_train'],
-                                 Arg1dev=Arg1PDTB[relation + '_dev'], Arg2dev=Arg2PDTB[relation + '_dev'],
-                                 ydev=rel[relation + '_dev'])
+discourse_relation_mlp = BertMLP(first_hidden_layer_size=75,
+                                 second_hidden_layer_size=50,
+                                 size_of_batch=100,
+                                 dropout=0.5,
+                                 loss=nn.NLLLoss(),
+                                 device=device,
+                                 classes=i2gold_rel)
 
 discourse_relation_mlp = discourse_relation_mlp.to(device)
 
@@ -116,8 +117,17 @@ discourse_relation_mlp = discourse_relation_mlp.to(device)
 optim = torch.optim.Adam(discourse_relation_mlp.parameters(), lr=0.00001, weight_decay=0.00085)
 
 # entrainement
-dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim, nb_epoch=50, patience=2,
-                                                                down_sampling=True, size_of_samples=1100,
+dev_losses, train_losses = discourse_relation_mlp.training_step(optimizer=optim,
+                                                                Arg1train=Arg1PDTB[relation + '_train'],
+                                                                Arg2train=Arg2PDTB[relation + '_train'],
+                                                                ytrain=rel[relation + '_train'],
+                                                                Arg1dev=Arg1PDTB[relation + '_dev'],
+                                                                Arg2dev=Arg2PDTB[relation + '_dev'],
+                                                                ydev=rel[relation + '_dev'],
+                                                                nb_epoch=1,
+                                                                patience=2,
+                                                                down_sampling=True,
+                                                                size_of_samples=1100,
                                                                 fixed_sampling=False)
 
 discourse_relation_mlp.evaluation("train", Arg1PDTB[relation + '_train'],
